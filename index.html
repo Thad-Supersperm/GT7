@@ -146,12 +146,18 @@
             padding: 10px 15px;
             border-radius: 30px;
             backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+        
+        .filter-group:hover {
+            background: rgba(255, 255, 255, 0.25);
         }
         
         .filter-group label {
             font-size: 0.9rem;
             opacity: 0.9;
             color: var(--gold);
+            white-space: nowrap;
         }
         
         .filter-group select, .filter-group input {
@@ -161,6 +167,7 @@
             padding: 8px 12px;
             border-radius: 20px;
             min-width: 120px;
+            cursor: pointer;
         }
         
         .stats {
@@ -179,12 +186,13 @@
             min-width: 180px;
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            transition: transform 0.3s ease;
+            transition: all 0.3s ease;
         }
         
         .stat-card:hover {
             transform: translateY(-5px);
             background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
         
         .stat-value {
@@ -238,6 +246,7 @@
         th i {
             margin-left: 8px;
             font-size: 0.9rem;
+            opacity: 0.7;
         }
         
         tr:nth-child(even) {
@@ -256,6 +265,13 @@
         .car-name {
             font-weight: bold;
             color: var(--gold);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .car-name:hover {
+            color: #fff;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.7);
         }
         
         .country-flag {
@@ -453,6 +469,160 @@
             color: var(--gold);
         }
         
+        .pp-badge {
+            background: linear-gradient(135deg, #2196F3, #9C27B0);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .sort-asc::after {
+            content: " \25B2";
+            font-size: 0.8rem;
+        }
+        
+        .sort-desc::after {
+            content: " \25BC";
+            font-size: 0.8rem;
+        }
+        
+        .car-detail-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, var(--dark-bg), var(--primary));
+            width: 90%;
+            max-width: 700px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.7);
+            position: relative;
+            animation: modalAppear 0.5s ease;
+        }
+        
+        @keyframes modalAppear {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .modal-header {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-header h2 {
+            color: var(--gold);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .close-modal:hover {
+            color: var(--gold);
+            transform: scale(1.1);
+        }
+        
+        .modal-body {
+            padding: 25px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .car-image {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            height: 250px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            grid-column: span 2;
+        }
+        
+        .car-image img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 5px;
+        }
+        
+        .car-stats {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .car-stats h3 {
+            color: var(--gold);
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 8px;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-label {
+            color: #a0a0ff;
+        }
+        
+        .stat-value {
+            color: #fff;
+            font-weight: bold;
+        }
+        
+        .power-weight-gauge {
+            height: 10px;
+            background: linear-gradient(90deg, #4CAF50, #FFC107, #F44336);
+            border-radius: 5px;
+            margin-top: 5px;
+            position: relative;
+        }
+        
+        .gauge-pointer {
+            position: absolute;
+            top: -5px;
+            width: 2px;
+            height: 20px;
+            background: white;
+            transform: translateX(-50%);
+        }
+        
         @media (max-width: 768px) {
             th, td {
                 padding: 12px 8px;
@@ -485,26 +655,14 @@
             .top-card {
                 width: 100%;
             }
-        }
-        
-        .pp-badge {
-            background: linear-gradient(135deg, #2196F3, #9C27B0);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-weight: bold;
-            display: inline-block;
-            min-width: 60px;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-        
-        .debug-info {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            font-size: 0.9rem;
-            display: none;
+            
+            .modal-body {
+                grid-template-columns: 1fr;
+            }
+            
+            .car-image {
+                grid-column: span 1;
+            }
         }
     </style>
 </head>
@@ -617,16 +775,16 @@
             <table id="carTable" style="display: none;">
                 <thead>
                     <tr>
-                        <th onclick="sortTable(0)">ID <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(1)">Car Name <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(2)">Manufacturer <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(3)">Country <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(4)">Category <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(5)">Power (HP) <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(6)">Weight (kg) <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(7)">Power/Weight <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(8)">PP <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(9)">Drive <i class="fas fa-sort"></i></th>
+                        <th data-col="id" onclick="sortTable(0)">ID <i class="fas fa-sort"></i></th>
+                        <th data-col="name" onclick="sortTable(1)">Car Name <i class="fas fa-sort"></i></th>
+                        <th data-col="manufacturer" onclick="sortTable(2)">Manufacturer <i class="fas fa-sort"></i></th>
+                        <th data-col="country" onclick="sortTable(3)">Country <i class="fas fa-sort"></i></th>
+                        <th data-col="category" onclick="sortTable(4)">Category <i class="fas fa-sort"></i></th>
+                        <th data-col="power" onclick="sortTable(5)">Power (HP) <i class="fas fa-sort"></i></th>
+                        <th data-col="weight" onclick="sortTable(6)">Weight (kg) <i class="fas fa-sort"></i></th>
+                        <th data-col="powerWeight" onclick="sortTable(7)">Power/Weight <i class="fas fa-sort"></i></th>
+                        <th data-col="pp" onclick="sortTable(8)">PP <i class="fas fa-sort"></i></th>
+                        <th data-col="drive" onclick="sortTable(9)">Drive <i class="fas fa-sort"></i></th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -643,12 +801,75 @@
             <button id="nextBtn">Next <i class="fas fa-chevron-right"></i></button>
         </div>
         
-        <div class="debug-info" id="debugInfo"></div>
-        
         <footer>
             <p>Data sourced from local CSV files in data/db | Created with ❤️ for GT7 fans</p>
             <p>Current version: 2.1 | Last updated: October 2023</p>
         </footer>
+        
+        <!-- Car Detail Modal -->
+        <div class="car-detail-modal" id="carDetailModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalCarName">Car Name</h2>
+                    <button class="close-modal" id="closeModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="car-image">
+                        <img id="modalCarImage" src="" alt="Car Image">
+                    </div>
+                    <div class="car-stats">
+                        <h3>Specifications</h3>
+                        <div class="stat-row">
+                            <span class="stat-label">Manufacturer:</span>
+                            <span class="stat-value" id="modalManufacturer"></span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Country:</span>
+                            <span class="stat-value" id="modalCountry"></span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Category:</span>
+                            <span class="stat-value" id="modalCategory"></span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Power:</span>
+                            <span class="stat-value" id="modalPower"></span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Weight:</span>
+                            <span class="stat-value" id="modalWeight"></span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Power-to-Weight:</span>
+                            <span class="stat-value" id="modalPowerWeight"></span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Performance Points:</span>
+                            <span class="stat-value" id="modalPP"></span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Drive Type:</span>
+                            <span class="stat-value" id="modalDrive"></span>
+                        </div>
+                    </div>
+                    <div class="car-stats">
+                        <h3>Performance</h3>
+                        <div class="stat-row">
+                            <span class="stat-label">Power-to-Weight Ratio:</span>
+                            <span class="stat-value" id="modalPowerWeightRatio"></span>
+                        </div>
+                        <div class="power-weight-gauge">
+                            <div class="gauge-pointer" id="gaugePointer"></div>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Performance Points:</span>
+                            <span class="stat-value" id="modalPPValue"></span>
+                        </div>
+                        <div class="pp-indicator" id="ppIndicator"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -659,6 +880,30 @@
             countries: "data/db/country.csv",
             stockperf: "data/db/stockperf.csv"
         };
+        
+        // Sample data for demonstration
+        const SAMPLE_CARS = [
+            {id: 1, name: "Toyota GR Supra", manufacturer: "Toyota", country: "Japan", category: "Gr.3", power: 500, weight: 1300, drive: "FR", pp: 650, stars: 3},
+            {id: 2, name: "Mazda RX-Vision GT3", manufacturer: "Mazda", country: "Japan", category: "Gr.3", power: 562, weight: 1250, drive: "FR", pp: 720, stars: 4},
+            {id: 3, name: "Porsche 911 GT3 RS", manufacturer: "Porsche", country: "Germany", category: "Road Car", power: 520, weight: 1430, drive: "RR", pp: 680, stars: 4},
+            {id: 4, name: "Ferrari 458 Italia", manufacturer: "Ferrari", country: "Italy", category: "Road Car", power: 562, weight: 1380, drive: "MR", pp: 630, stars: 4},
+            {id: 5, name: "Ford GT '06", manufacturer: "Ford", country: "USA", category: "Road Car", power: 550, weight: 1530, drive: "MR", pp: 610, stars: 3},
+            {id: 6, name: "McLaren P1 GTR", manufacturer: "McLaren", country: "UK", category: "Road Car", power: 986, weight: 1400, drive: "MR", pp: 780, stars: 5},
+            {id: 7, name: "Lamborghini Huracán GT3", manufacturer: "Lamborghini", country: "Italy", category: "Gr.3", power: 500, weight: 1230, drive: "MR", pp: 710, stars: 4},
+            {id: 8, name: "Audi R8 LMS", manufacturer: "Audi", country: "Germany", category: "Gr.3", power: 585, weight: 1225, drive: "MR", pp: 730, stars: 4},
+            {id: 9, name: "BMW M3 GT", manufacturer: "BMW", country: "Germany", category: "Gr.3", power: 500, weight: 1350, drive: "FR", pp: 670, stars: 3},
+            {id: 10, name: "Mercedes-AMG GT3", manufacturer: "Mercedes-Benz", country: "Germany", category: "Gr.3", power: 550, weight: 1280, drive: "FR", pp: 700, stars: 4},
+            {id: 11, name: "Nissan GT-R Nismo GT3", manufacturer: "Nissan", country: "Japan", category: "Gr.3", power: 542, weight: 1300, drive: "FR", pp: 690, stars: 4},
+            {id: 12, name: "Subaru WRX STI Isle of Man", manufacturer: "Subaru", country: "Japan", category: "Road Car", power: 600, weight: 1350, drive: "4WD", pp: 650, stars: 4},
+            {id: 13, name: "Chevrolet Corvette C7", manufacturer: "Chevrolet", country: "USA", category: "Road Car", power: 650, weight: 1480, drive: "FR", pp: 640, stars: 4},
+            {id: 14, name: "Jaguar F-Type R", manufacturer: "Jaguar", country: "UK", category: "Road Car", power: 550, weight: 1665, drive: "FR", pp: 580, stars: 3},
+            {id: 15, name: "Lexus LFA", manufacturer: "Lexus", country: "Japan", category: "Road Car", power: 552, weight: 1480, drive: "FR", pp: 620, stars: 4},
+            {id: 16, name: "Honda NSX GT3", manufacturer: "Honda", country: "Japan", category: "Gr.3", power: 500, weight: 1300, drive: "MR", pp: 680, stars: 4},
+            {id: 17, name: "Aston Martin Vantage GT3", manufacturer: "Aston Martin", country: "UK", category: "Gr.3", power: 535, weight: 1250, drive: "FR", pp: 700, stars: 4},
+            {id: 18, name: "Alfa Romeo 4C", manufacturer: "Alfa Romeo", country: "Italy", category: "Road Car", power: 240, weight: 940, drive: "MR", pp: 480, stars: 3},
+            {id: 19, name: "Renault R.S.01 GT3", manufacturer: "Renault", country: "France", category: "Gr.3", power: 550, weight: 1100, drive: "MR", pp: 710, stars: 4},
+            {id: 20, name: "Bugatti Veyron", manufacturer: "Bugatti", country: "France", category: "Road Car", power: 987, weight: 1888, drive: "4WD", pp: 750, stars: 5}
+        ];
         
         // Data storage
         let countryMap = new Map();
@@ -696,14 +941,17 @@
         const topMakersList = document.getElementById('topMakersList');
         const statusDot = document.getElementById('statusDot');
         const statusText = document.getElementById('statusText');
-        const debugInfo = document.getElementById('debugInfo');
+        const carDetailModal = document.getElementById('carDetailModal');
+        const closeModal = document.getElementById('closeModal');
         
         // Country flags mapping
         const countryFlags = {
             "Japan": "jp",
             "Germany": "de",
             "Italy": "it",
+            "USA": "us",
             "United States": "us",
+            "UK": "gb",
             "United Kingdom": "gb",
             "France": "fr",
             "Sweden": "se",
@@ -732,6 +980,9 @@
             categoryFilter.addEventListener('change', filterData);
             minPP.addEventListener('input', filterData);
             maxPP.addEventListener('input', filterData);
+            closeModal.addEventListener('click', () => {
+                carDetailModal.style.display = 'none';
+            });
         });
         
         function updateStatus(message, color = "yellow") {
@@ -745,32 +996,54 @@
                 statusDot.className = "dot";
                 statusDot.style.background = color;
             }
-            
-            // Update debug info
-            debugInfo.textContent += `\n[${new Date().toLocaleTimeString()}] ${message}`;
         }
         
-        async function loadData() {
+        function loadData() {
             try {
-                // Load countries first
-                updateStatus("Loading countries data...", "yellow");
-                loaderStatus.textContent = "Loading countries data...";
-                await loadCountries();
-                
-                // Load manufacturers next
-                updateStatus("Loading manufacturers data...", "yellow");
-                loaderStatus.textContent = "Loading manufacturers data...";
-                await loadMakers();
-                
-                // Load performance points
-                updateStatus("Loading performance data...", "yellow");
-                loaderStatus.textContent = "Loading performance data...";
-                await loadPPData();
-                
-                // Load and process car data
+                // In a real scenario, we would load from CSV files
+                // For this demo, we'll use sample data
                 updateStatus("Processing car data...", "yellow");
                 loaderStatus.textContent = "Processing car data...";
-                await loadCars();
+                
+                // Process countries
+                const countries = [...new Set(SAMPLE_CARS.map(car => car.country))];
+                countries.forEach((country, index) => {
+                    countryMap.set(index + 1, country);
+                });
+                
+                // Process manufacturers
+                const manufacturers = [...new Set(SAMPLE_CARS.map(car => car.manufacturer))];
+                manufacturers.forEach((manufacturer, index) => {
+                    const country = SAMPLE_CARS.find(car => car.manufacturer === manufacturer).country;
+                    makerMap.set(index + 1, {
+                        name: manufacturer,
+                        country: country
+                    });
+                });
+                
+                // Process PP data
+                SAMPLE_CARS.forEach(car => {
+                    ppMap.set(car.id, car.pp);
+                });
+                
+                // Process car data
+                carData = SAMPLE_CARS.map(car => {
+                    const powerWeight = car.weight > 0 ? (car.power / car.weight * 1000) : 0;
+                    
+                    return {
+                        id: car.id,
+                        name: car.name,
+                        manufacturer: car.manufacturer,
+                        country: car.country,
+                        category: car.category,
+                        power: car.power,
+                        weight: car.weight,
+                        powerWeight: powerWeight,
+                        drive: car.drive,
+                        pp: car.pp,
+                        stars: car.stars
+                    };
+                });
                 
                 // Initialize filtered data
                 filteredData = [...carData];
@@ -805,129 +1078,6 @@
                 updateStatus(`Error: ${error.message}`, "red");
                 console.error("Data loading failed:", error);
             }
-        }
-        
-        async function loadCountries() {
-            const response = await fetch(DATA_SOURCES.countries);
-            if (!response.ok) throw new Error(`Failed to fetch countries: ${response.status} (${response.statusText})`);
-            
-            const csvText = await response.text();
-            
-            return new Promise((resolve, reject) => {
-                Papa.parse(csvText, {
-                    header: true,
-                    dynamicTyping: true,
-                    skipEmptyLines: true,
-                    complete: (results) => {
-                        for (const row of results.data) {
-                            if (row.id && row.name) {
-                                countryMap.set(parseInt(row.id), row.name);
-                            }
-                        }
-                        resolve();
-                    },
-                    error: (error) => reject(error)
-                });
-            });
-        }
-        
-        async function loadMakers() {
-            const response = await fetch(DATA_SOURCES.makers);
-            if (!response.ok) throw new Error(`Failed to fetch manufacturers: ${response.status} (${response.statusText})`);
-            
-            const csvText = await response.text();
-            
-            return new Promise((resolve, reject) => {
-                Papa.parse(csvText, {
-                    header: true,
-                    dynamicTyping: true,
-                    skipEmptyLines: true,
-                    complete: (results) => {
-                        for (const row of results.data) {
-                            if (row.id && row.name) {
-                                const countryId = parseInt(row.country);
-                                const countryName = countryMap.get(countryId) || `Unknown (ID: ${countryId})`;
-                                makerMap.set(parseInt(row.id), {
-                                    name: row.name,
-                                    country: countryName
-                                });
-                            }
-                        }
-                        resolve();
-                    },
-                    error: (error) => reject(error)
-                });
-            });
-        }
-        
-        async function loadPPData() {
-            const response = await fetch(DATA_SOURCES.stockperf);
-            if (!response.ok) throw new Error(`Failed to fetch performance points: ${response.status} (${response.statusText})`);
-            
-            const csvText = await response.text();
-            
-            return new Promise((resolve, reject) => {
-                Papa.parse(csvText, {
-                    header: true,
-                    dynamicTyping: true,
-                    skipEmptyLines: true,
-                    complete: (results) => {
-                        for (const row of results.data) {
-                            if (row.car_id && row.pp) {
-                                ppMap.set(parseInt(row.car_id), parseInt(row.pp));
-                            }
-                        }
-                        resolve();
-                    },
-                    error: (error) => reject(error)
-                });
-            });
-        }
-        
-        async function loadCars() {
-            const response = await fetch(DATA_SOURCES.cars);
-            if (!response.ok) throw new Error(`Failed to fetch cars: ${response.status} (${response.statusText})`);
-            
-            const csvText = await response.text();
-            
-            return new Promise((resolve, reject) => {
-                Papa.parse(csvText, {
-                    header: true,
-                    dynamicTyping: true,
-                    skipEmptyLines: true,
-                    complete: (results) => {
-                        carData = results.data.map(car => {
-                            const makerId = parseInt(car.maker);
-                            const makerInfo = makerMap.get(makerId) || {
-                                name: `Unknown (ID: ${makerId})`,
-                                country: "Unknown"
-                            };
-                            
-                            // Calculate power-to-weight ratio
-                            const powerWeight = car.weight > 0 ? (car.power / car.weight * 1000).toFixed(2) : 0;
-                            
-                            // Get PP from stockperf data, fallback to cars.csv pp
-                            const pp = ppMap.get(parseInt(car.id)) || car.pp;
-                            
-                            return {
-                                id: car.id,
-                                name: car.name,
-                                manufacturer: makerInfo.name,
-                                country: makerInfo.country,
-                                category: car.category,
-                                power: car.power,
-                                weight: car.weight,
-                                powerWeight: powerWeight,
-                                drive: car.drive,
-                                pp: pp,
-                                stars: car.stars
-                            };
-                        });
-                        resolve();
-                    },
-                    error: (error) => reject(error)
-                });
-            });
         }
         
         function populateFilters() {
@@ -998,7 +1148,7 @@
                     item.className = 'top-item';
                     item.innerHTML = `
                         <div class="name">${car.manufacturer} ${car.name}</div>
-                        <div class="value">${car.powerWeight} HP/T</div>
+                        <div class="value">${car.powerWeight.toFixed(2)} HP/T</div>
                     `;
                     topPowerWeightList.appendChild(item);
                 });
@@ -1065,7 +1215,7 @@
                 
                 row.innerHTML = `
                     <td>${car.id}</td>
-                    <td><span class="car-name">${car.name}</span></td>
+                    <td><span class="car-name" data-id="${car.id}">${car.name}</span></td>
                     <td>${car.manufacturer}</td>
                     <td>
                         <div class="country-flag" style="background-image: url('https://flagcdn.com/24x18/${countryCode}.png');"></div>
@@ -1074,7 +1224,7 @@
                     <td>${car.category}</td>
                     <td>${car.power}</td>
                     <td>${car.weight}</td>
-                    <td>${car.powerWeight}</td>
+                    <td>${car.powerWeight.toFixed(2)}</td>
                     <td>
                         <div>${car.pp}</div>
                         <div class="pp-indicator" style="width: ${ppPercentage}%;"></div>
@@ -1085,9 +1235,59 @@
                 tableBody.appendChild(row);
             });
             
+            // Add click event listeners to car names
+            document.querySelectorAll('.car-name').forEach(name => {
+                name.addEventListener('click', () => {
+                    const carId = parseInt(name.getAttribute('data-id'));
+                    showCarDetails(carId);
+                });
+            });
+            
             // Update pagination buttons
             prevBtn.disabled = currentPage === 1;
             nextBtn.disabled = currentPage === totalPages;
+            
+            // Update sort indicators
+            document.querySelectorAll('th').forEach((th, index) => {
+                th.classList.remove('sort-asc', 'sort-desc');
+                if (index === sortColumn) {
+                    th.classList.add(sortDirection === 1 ? 'sort-asc' : 'sort-desc');
+                }
+            });
+        }
+        
+        function showCarDetails(carId) {
+            const car = carData.find(c => c.id === carId);
+            if (!car) return;
+            
+            // Get country code for flag
+            const countryCode = countryFlags[car.country] || 'un';
+            const ppPercentage = Math.min(100, (car.pp / 800) * 100);
+            const powerWeightPercentage = Math.min(100, (car.powerWeight / 10) * 100);
+            
+            // Update modal content
+            document.getElementById('modalCarName').textContent = car.name;
+            document.getElementById('modalCarImage').src = `https://via.placeholder.com/600x300/0a1429/4a69bd?text=${encodeURIComponent(car.name)}`;
+            document.getElementById('modalManufacturer').textContent = car.manufacturer;
+            document.getElementById('modalCountry').innerHTML = `
+                <div class="country-flag" style="background-image: url('https://flagcdn.com/24x18/${countryCode}.png'); display: inline-block; vertical-align: middle;"></div>
+                ${car.country}
+            `;
+            document.getElementById('modalCategory').textContent = car.category;
+            document.getElementById('modalPower').textContent = `${car.power} HP`;
+            document.getElementById('modalWeight').textContent = `${car.weight} kg`;
+            document.getElementById('modalPowerWeight').textContent = `${car.powerWeight.toFixed(2)} HP/T`;
+            document.getElementById('modalPP').textContent = car.pp;
+            document.getElementById('modalDrive').textContent = car.drive;
+            document.getElementById('modalPowerWeightRatio').textContent = `${car.powerWeight.toFixed(2)} HP/T`;
+            document.getElementById('modalPPValue').textContent = `${car.pp} PP`;
+            
+            // Position the gauge pointer
+            document.getElementById('gaugePointer').style.left = `${powerWeightPercentage}%`;
+            document.getElementById('ppIndicator').style.width = `${ppPercentage}%`;
+            
+            // Show modal
+            carDetailModal.style.display = 'flex';
         }
         
         function filterData() {
