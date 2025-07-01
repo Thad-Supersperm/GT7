@@ -1,9 +1,9 @@
-name: Sync External Folder
+name: Sync GT7 Data Folder
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # Runs every day at 6:00 AM UTC
-  workflow_dispatch:       # Allow manual trigger
+    - cron: '0 6 * * *'  # Runs daily at 6:00 AM UTC
+  workflow_dispatch:       # Manual trigger option
 
 jobs:
   sync-folder:
@@ -15,21 +15,22 @@ jobs:
       with:
         persist-credentials: false
 
-    - name: Clone source repo
+    - name: Clone source repo (gt7info)
       run: |
-        git clone --depth 1 https://github.com/ddm999/gt7info.git data
+        git clone --depth 1 --branch gh-pages https://github.com/ddm999/gt7info.git source-repo
 
-    - name: Copy folder to your repo
+    - name: Copy /data folder to your repo
       run: |
         rm -rf data
-        cp -r data data
+        mkdir -p data
+        cp -r source-repo/data/* data/
 
     - name: Commit and push changes
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git add .
-        git diff --quiet && git diff --staged --quiet || git commit -m "Update external folder from source repo"
+        git add data
+        git diff --quiet && git diff --staged --quiet || git commit -m "Update data folder from ddm999/gt7info"
         git push
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
