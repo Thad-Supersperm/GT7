@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Database Viewer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -40,7 +41,8 @@
             font-size: 1.2rem;
             opacity: 0.9;
             max-width: 700px;
-            margin: 0 auto;
+            margin: 20px auto;
+            line-height: 1.6;
         }
         
         .card {
@@ -159,6 +161,9 @@
             border: 1px solid #ddd;
             margin-right: 8px;
             vertical-align: middle;
+            border-radius: 2px;
+            background-size: cover;
+            background-position: center;
         }
         
         .loading {
@@ -200,6 +205,41 @@
             margin-top: 30px;
         }
         
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .csv-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+        
+        .csv-info h3 {
+            margin-bottom: 10px;
+            color: #1565c0;
+        }
+        
         @media (max-width: 768px) {
             .controls {
                 flex-direction: column;
@@ -215,6 +255,11 @@
             
             th, td {
                 padding: 10px;
+                font-size: 0.9rem;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
             }
         }
     </style>
@@ -222,18 +267,28 @@
 <body>
     <div class="container">
         <header>
-            <h1>Car Database Viewer</h1>
+            <h1><i class="fas fa-car"></i> Car Database Viewer</h1>
             <p class="subtitle">Explore our comprehensive database of cars with detailed information about manufacturers and their countries of origin.</p>
         </header>
         
         <div class="card">
+            <div class="csv-info">
+                <h3><i class="fas fa-info-circle"></i> Data Source</h3>
+                <p>This data is loaded from CSV files stored in the <code>data/db/</code> directory:</p>
+                <ul>
+                    <li><code>cars.csv</code> - Contains car models with maker IDs</li>
+                    <li><code>maker.csv</code> - Contains manufacturers with country IDs</li>
+                    <li><code>country.csv</code> - Contains countries with country codes</li>
+                </ul>
+            </div>
+            
             <div class="controls">
                 <div class="search-box">
-                    <span class="search-icon">🔍</span>
+                    <span class="search-icon"><i class="fas fa-search"></i></span>
                     <input type="text" id="searchInput" placeholder="Search by car, maker or country...">
                 </div>
                 <div>
-                    <button id="resetBtn" class="btn">Reset Filters</button>
+                    <button id="resetBtn" class="btn"><i class="fas fa-sync-alt"></i> Reset Filters</button>
                 </div>
             </div>
             
@@ -253,12 +308,12 @@
             </div>
             
             <div class="error" id="errorMessage">
-                Error loading data. Please check your CSV files and try again.
+                <i class="fas fa-exclamation-triangle"></i> Error loading data. Please check your CSV files and try again.
             </div>
             
             <div class="loading" id="loadingIndicator">
                 <div class="loading-spinner"></div>
-                <p>Loading car data...</p>
+                <p>Loading car data from CSV files...</p>
             </div>
             
             <table id="carTable">
@@ -282,49 +337,9 @@
     </div>
 
     <script>
-        // Mock CSV data - in a real implementation, this would be loaded from files
-        const mockCarsCsv = `car_id,name,maker_id
-1,Corolla,1
-2,Camry,1
-3,Civic,2
-4,Accord,2
-5,3 Series,3
-6,5 Series,3
-7,A4,4
-8,Q5,4
-9,F-150,5
-10,Mustang,5
-11,Model S,6
-12,Model 3,6
-13,Optima,7
-14,Sorento,7
-15,911,8
-16,Cayenne,8
-17,Giulia,9
-18,Stelvio,9
-19,XC90,10
-20,S60,10`;
-
-        const mockMakerCsv = `maker_id,name,country_id
-1,Toyota,1
-2,Honda,1
-3,BMW,2
-4,Audi,2
-5,Ford,3
-6,Tesla,3
-7,Kia,4
-8,Porsche,2
-9,Alfa Romeo,5
-10,Volvo,6`;
-
-        const mockCountryCsv = `country_id,name,country_code
-1,Japan,JP
-2,Germany,DE
-3,United States,US
-4,South Korea,KR
-5,Italy,IT
-6,Sweden,SE`;
-
+        // Base URL for CSV files (adjust as needed for your GitHub repository)
+        const basePath = 'data/db/';
+        
         // Parse CSV function
         function parseCSV(csvText) {
             const lines = csvText.split('\n');
@@ -348,13 +363,36 @@
             return rows;
         }
 
-        // Load data function
-        function loadData() {
+        // Load data from CSV files using fetch
+        async function loadData() {
             try {
+                // Show loading indicator
+                document.getElementById('loadingIndicator').style.display = 'block';
+                document.getElementById('errorMessage').style.display = 'none';
+                
+                // Load all CSV files in parallel
+                const [carsResponse, makersResponse, countriesResponse] = await Promise.all([
+                    fetch(`${basePath}cars.csv`),
+                    fetch(`${basePath}maker.csv`),
+                    fetch(`${basePath}country.csv`)
+                ]);
+                
+                // Check for errors
+                if (!carsResponse.ok || !makersResponse.ok || !countriesResponse.ok) {
+                    throw new Error('Failed to load CSV files');
+                }
+                
+                // Parse CSV text
+                const [carsText, makersText, countriesText] = await Promise.all([
+                    carsResponse.text(),
+                    makersResponse.text(),
+                    countriesResponse.text()
+                ]);
+                
                 // Parse CSV data
-                const cars = parseCSV(mockCarsCsv);
-                const makers = parseCSV(mockMakerCsv);
-                const countries = parseCSV(mockCountryCsv);
+                const cars = parseCSV(carsText);
+                const makers = parseCSV(makersText);
+                const countries = parseCSV(countriesText);
                 
                 // Create maps for quick lookup
                 const countryMap = {};
@@ -376,13 +414,18 @@
                 // Combine data
                 const combinedData = cars.map(car => {
                     const maker = makerMap[car.maker_id];
+                    if (!maker) {
+                        console.warn(`Maker not found for car: ${car.name} (maker_id: ${car.maker_id})`);
+                        return null;
+                    }
+                    
                     return {
                         carName: car.name,
                         makerName: maker.name,
-                        countryName: maker.country.name,
-                        countryCode: maker.country.code
+                        countryName: maker.country ? maker.country.name : 'Unknown',
+                        countryCode: maker.country ? maker.country.code : '??'
                     };
-                });
+                }).filter(item => item !== null); // Filter out any null entries
                 
                 return combinedData;
             } catch (error) {
@@ -398,16 +441,16 @@
             tableBody.innerHTML = '';
             
             if (cars.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center;">No car data found</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 30px;">No car data found</td></tr>`;
                 return;
             }
             
             cars.forEach(car => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${car.carName}</td>
-                    <td>${car.makerName}</td>
-                    <td><div class="country-flag" style="background-color: ${getCountryColor(car.countryName)}"></div>${car.countryName}</td>
+                    <td><i class="fas fa-car-side"></i> ${car.carName}</td>
+                    <td><i class="fas fa-industry"></i> ${car.makerName}</td>
+                    <td><div class="country-flag" style="background-color: ${getCountryColor(car.countryName)}"></div> ${car.countryName}</td>
                     <td>${car.countryCode}</td>
                 `;
                 tableBody.appendChild(row);
@@ -447,42 +490,44 @@
         }
 
         // Filter function
-        function filterCars() {
+        function filterCars(cars) {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const allCars = loadData();
             
             if (!searchTerm) {
-                displayData(allCars);
-                return;
+                return cars;
             }
             
-            const filteredCars = allCars.filter(car => 
+            return cars.filter(car => 
                 car.carName.toLowerCase().includes(searchTerm) ||
                 car.makerName.toLowerCase().includes(searchTerm) ||
                 car.countryName.toLowerCase().includes(searchTerm) ||
                 car.countryCode.toLowerCase().includes(searchTerm)
             );
-            
-            displayData(filteredCars);
         }
 
         // Initialize the page
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             // Show loading state
             document.getElementById('loadingIndicator').style.display = 'block';
             
-            // Simulate loading delay
-            setTimeout(() => {
-                const carData = loadData();
+            try {
+                const carData = await loadData();
                 displayData(carData);
                 
                 // Set up event listeners
-                document.getElementById('searchInput').addEventListener('input', filterCars);
+                document.getElementById('searchInput').addEventListener('input', () => {
+                    const filteredData = filterCars(carData);
+                    displayData(filteredData);
+                });
+                
                 document.getElementById('resetBtn').addEventListener('click', () => {
                     document.getElementById('searchInput').value = '';
                     displayData(carData);
                 });
-            }, 1500);
+            } catch (error) {
+                console.error("Initialization error:", error);
+                showError();
+            }
         });
     </script>
 </body>
