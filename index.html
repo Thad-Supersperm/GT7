@@ -480,34 +480,34 @@
                 // Create maps for quick lookup
                 const countryMap = {};
                 countries.forEach(country => {
-                    countryMap[country.country_id] = {
-                        name: country.name,
-                        code: country.country_code
+                    countryMap[country.ID] = { // Assuming 'ID' is the column name in country.csv
+                        name: country.Name,
+                        code: country.Code
                     };
                 });
                 
                 const makerMap = {};
                 makers.forEach(maker => {
-                    const countryId = maker.country_id;
+                    const countryId = maker.Country; // Assuming 'Country' is the column name in maker.csv
                     if (!countryMap[countryId]) {
-                        console.warn(`Country not found for maker: ${maker.name} (country_id: ${countryId})`);
+                        console.warn(`Country not found for maker: ${maker.Name} (country_id: ${countryId})`);
                     }
                     
-                    makerMap[maker.maker_id] = {
-                        name: maker.name,
+                    makerMap[maker.ID] = { // Assuming 'ID' is the column name in maker.csv
+                        name: maker.Name,
                         country: countryMap[countryId] || { name: 'Unknown', code: '??' }
                     };
                 });
                 
                 // Combine data
                 const combinedData = cars.map(car => {
-                    const makerId = car.maker_id;
+                    const makerId = car.Maker; // Assuming 'Maker' is the column name in cars.csv
                     const maker = makerMap[makerId];
                     
                     if (!maker) {
-                        console.warn(`Maker not found for car: ${car.name} (maker_id: ${makerId})`);
+                        console.warn(`Maker not found for car: ${car.ShortName} (maker_id: ${makerId})`);
                         return {
-                            carName: car.name,
+                            carName: car.ShortName,
                             makerName: 'Unknown Manufacturer',
                             countryName: 'Unknown',
                             countryCode: '??'
@@ -515,7 +515,7 @@
                     }
                     
                     return {
-                        carName: car.name,
+                        carName: car.ShortName, // Assuming 'ShortName' is the column name in cars.csv
                         makerName: maker.name,
                         countryName: maker.country.name,
                         countryCode: maker.country.code
@@ -573,7 +573,11 @@
         // Generate a color based on country name
         function getCountryColor(countryName) {
             const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#d35400'];
-            const index = countryName.charCodeAt(0) % colors.length;
+            let hash = 0;
+            for (let i = 0; i < countryName.length; i++) {
+                hash = countryName.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const index = Math.abs(hash % colors.length);
             return colors[index];
         }
 
@@ -601,7 +605,7 @@
                 car.carName.toLowerCase().includes(term) ||
                 car.makerName.toLowerCase().includes(term) ||
                 car.countryName.toLowerCase().includes(term) ||
-                car.countryCode.toLowerCase().includes(term)
+                (car.countryCode && car.countryCode.toLowerCase().includes(term))
             );
         }
 
