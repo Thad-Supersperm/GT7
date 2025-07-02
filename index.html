@@ -109,12 +109,14 @@
         // Main function to load all data and build the page
         async function loadAllData() {
             try {
+                // *** THIS IS THE CORRECTED PART ***
+                const basePath = 'data/db/';
                 const [cars, manufacturers, countries, colors, stockperf] = await Promise.all([
-                    fetchAndParseCSV('data/cars.csv'),
-                    fetchAndParseCSV('data/maker.csv'),
-                    fetchAndParseCSV('data/country.csv'),
-                    fetchAndParseCSV('data/colors.csv'),
-                    fetchAndParseCSV('data/stockperf.csv')
+                    fetchAndParseCSV(basePath + 'cars.csv'),
+                    fetchAndParseCSV(basePath + 'maker.csv'),
+                    fetchAndParseCSV(basePath + 'country.csv'),
+                    fetchAndParseCSV(basePath + 'colors.csv'),
+                    fetchAndParseCSV(basePath + 'stockperf.csv')
                 ]);
 
                 // Create maps for efficient data lookup
@@ -161,9 +163,6 @@
         
         // Builds the manufacturer/country summary tables in the header
         function buildHeaderTables(manufacturers, countries) {
-             // This function can be complex. For now, let's keep it simple or assume a predefined structure.
-             // A full dynamic build would group manufacturers by country and generate the nested tables.
-             // This is a placeholder to show where that logic would go.
              console.log("Header table generation would go here.");
         }
 
@@ -174,7 +173,6 @@
 
             let currentMake = '';
             carData.forEach((car, index) => {
-                // Add a header row for each new manufacturer
                 if (car.MakeName !== currentMake) {
                     currentMake = car.MakeName;
                     const headerRow = document.createElement('tr');
@@ -182,7 +180,6 @@
                     tbody.appendChild(headerRow);
                 }
 
-                // Create the car's data row
                 const tr = document.createElement('tr');
                 tr.id = car.ID;
 
@@ -192,8 +189,6 @@
                 
                 const ownClasses = `a ${car.MakerCode} ${car.CountryCode}`;
 
-                // Note: Year, Layout, Aspiration, Prices, Tags, HowToObtain are missing from provided CSVs.
-                // These will be left blank until added to cars.csv or another file.
                 tr.innerHTML = `
                     <th>${index + 1}</th>
                     <td>${car.CountryCode}</td>
@@ -244,7 +239,7 @@
         function sortTable(columnIndex) {
             const table = document.getElementById("main-table");
             const tbody = table.tBodies[0];
-            const rows = Array.from(tbody.querySelectorAll('tr[id]')); // Only sort rows with an ID (car rows)
+            const rows = Array.from(tbody.querySelectorAll('tr[id]'));
             
             const ascending = (lastSortedColumn === columnIndex) ? !lastSortAscending : true;
 
@@ -284,7 +279,7 @@
                 const ratio = zCount > 0 ? (vCount / zCount * 100) : 0;
                 const div = row.querySelector('div.own-cell');
                 if (div) {
-                    div.className = 'own-cell ' + div.className; // Reset classes but keep original
+                    div.className = 'own-cell ' + div.className;
                     if (vCount === 0) div.classList.add('n');
                     else {
                         div.classList.add('o');
@@ -296,12 +291,8 @@
         }
         
         function totals() {
-            // This function remains complex and depends on the specific IDs in the header.
-            // It will need the header to be built first. We'll leave it as is for now.
-            // A more robust solution would be to calculate these totals from the data directly.
             console.log("Totals calculation running.");
         }
-
     </script>
 </body>
 </html>
