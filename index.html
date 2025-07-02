@@ -1,646 +1,307 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <title>GT7 Carlist</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Database Viewer</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #1a2a6c, #2a5a8c, #3a8aac);
-            color: #333;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        header {
-            text-align: center;
-            padding: 40px 20px;
-            color: white;
-            animation: fadeIn 1s ease;
-        }
-        
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            max-width: 700px;
-            margin: 20px auto;
-            line-height: 1.6;
-        }
-        
-        .card {
-            background: rgba(255, 255, 255, 0.97);
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            padding: 30px;
-            margin: 20px 0;
-            animation: slideUp 0.8s ease;
-        }
-        
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-        
-        .search-box {
-            flex: 1;
-            max-width: 400px;
-            position: relative;
-        }
-        
-        .search-box input {
-            width: 100%;
-            padding: 12px 20px;
-            padding-left: 45px;
-            border: 2px solid #ddd;
-            border-radius: 50px;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-        
-        .search-box input:focus {
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-            outline: none;
-        }
-        
-        .search-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #777;
-        }
-        
-        .stats {
-            display: flex;
-            gap: 20px;
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .stat-card {
-            text-align: center;
-            padding: 15px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
-            flex: 1;
-            transition: transform 0.3s;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #3498db;
-        }
-        
-        .stat-label {
-            color: #777;
-            font-size: 0.9rem;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        
-        th {
-            background: #3498db;
-            color: white;
-            text-align: left;
-            padding: 15px;
-            position: sticky;
-            top: 0;
-        }
-        
-        th:first-child {
-            border-top-left-radius: 10px;
-        }
-        
-        th:last-child {
-            border-top-right-radius: 10px;
-        }
-        
-        tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-        
-        td {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .country-flag {
-            display: inline-block;
-            width: 24px;
-            height: 16px;
-            background: #eee;
-            border: 1px solid #ddd;
-            margin-right: 8px;
-            vertical-align: middle;
-            border-radius: 2px;
-            background-size: cover;
-            background-position: center;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 40px;
-            font-size: 1.2rem;
-            color: #777;
-        }
-        
-        .loading-spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left: 4px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px 0;
-            display: none;
-        }
-        
-        footer {
-            text-align: center;
-            padding: 20px;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.9rem;
-            margin-top: 30px;
-        }
-        
-        .btn {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        
-        .btn:hover {
-            background: #2980b9;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
-        }
-        
-        .btn:active {
-            transform: translateY(0);
-        }
-        
-        .csv-info {
-            background: #e3f2fd;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            font-size: 0.9rem;
-        }
-        
-        .csv-info h3 {
-            margin-bottom: 10px;
-            color: #1565c0;
-        }
-        
-        .data-source {
-            background: #e8f5e9;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            font-size: 0.9rem;
-        }
-        
-        .data-source h3 {
-            margin-bottom: 10px;
-            color: #2e7d32;
-        }
-        
-        .path-list {
-            list-style: none;
-            padding: 10px 0;
-        }
-        
-        .path-list li {
-            padding: 5px 0;
-            display: flex;
-            align-items: center;
-        }
-        
-        .path-list li:before {
-            content: "📁";
-            margin-right: 8px;
-        }
-        
-        @media (max-width: 768px) {
-            .controls {
-                flex-direction: column;
-            }
-            
-            .search-box {
-                max-width: 100%;
-            }
-            
-            .stats {
-                flex-direction: column;
-            }
-            
-            th, td {
-                padding: 10px;
-                font-size: 0.9rem;
-            }
-            
-            h1 {
-                font-size: 2.2rem;
-            }
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        @keyframes slideUp {
-            from { 
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to { 
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .success-message {
-            background: #e8f5e9;
-            color: #2e7d32;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px 0;
-            display: none;
-        }
+        body { font-family: sans-serif; }
+        table, th, td { border: 1px solid black; border-collapse: collapse; padding: 4px; vertical-align: top;}
+        #main-table tbody tr:nth-child(even) { background-color: #D6EEEE; }
+        p { white-space: nowrap; display: block; margin: 2px 0; }
+        div.own-cell { font-weight: bold; }
+        .q { vertical-align: bottom; border: none; }
+        .n::before, .z::before, .t::before { content: "\25CE"; } /* Empty Circle */
+        .o::before { content: "\25CF"; } /* Full Circle */
+        .c::before, .v::before, .y::before { content: "\25C9"; } /* Fisheye */
+        #main-table thead th { cursor: pointer; user-select: none; }
+        .price { text-align: right; }
+        .car-make-header { text-align: center; background-color: #c0c0c0; font-size: 1.2em; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1><i class="fas fa-car"></i> Car Database Viewer</h1>
-            <p class="subtitle">Explore our comprehensive database of cars with detailed information about manufacturers and their countries of origin.</p>
-        </header>
-        
-        <div class="card">
-            <div class="data-source">
-                <h3><i class="fas fa-database"></i> Data Source Configuration</h3>
-                <p>This application loads data from the following CSV files:</p>
-                <ul class="path-list">
-                    <li><code>data/db/cars.csv</code> - Car models with maker IDs</li>
-                    <li><code>data/db/maker.csv</code> - Manufacturers with country IDs</li>
-                    <li><code>data/db/country.csv</code> - Countries with country codes</li>
-                </ul>
-                <p>All data is loaded directly from your GitHub repository.</p>
-            </div>
-            
-            <div class="success-message" id="successMessage">
-                <i class="fas fa-check-circle"></i> Data loaded successfully from CSV files!
-            </div>
-            
-            <div class="error" id="errorMessage">
-                <i class="fas fa-exclamation-triangle"></i> Error loading data. Please check your CSV files and try again.
-            </div>
-            
-            <div class="controls">
-                <div class="search-box">
-                    <span class="search-icon"><i class="fas fa-search"></i></span>
-                    <input type="text" id="searchInput" placeholder="Search by car, maker or country...">
-                </div>
-                <div>
-                    <button id="refreshBtn" class="btn"><i class="fas fa-sync-alt"></i> Refresh Data</button>
-                    <button id="resetBtn" class="btn"><i class="fas fa-filter"></i> Reset Filters</button>
-                </div>
-            </div>
-            
-            <div class="stats">
-                <div class="stat-card">
-                    <div class="stat-value" id="totalCars">0</div>
-                    <div class="stat-label">Total Cars</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="uniqueMakers">0</div>
-                    <div class="stat-label">Unique Makers</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="uniqueCountries">0</div>
-                    <div class="stat-label">Countries</div>
-                </div>
-            </div>
-            
-            <div class="loading" id="loadingIndicator">
-                <div class="loading-spinner"></div>
-                <p>Loading car data from CSV files...</p>
-                <p id="loadingStatus">Initializing data load</p>
-            </div>
-            
-            <table id="carTable">
-                <thead>
-                    <tr>
-                        <th>Car Model</th>
-                        <th>Manufacturer</th>
-                        <th>Country of Origin</th>
-                        <th>Country Code</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <!-- Table content will be populated by JavaScript -->
-                </tbody>
-            </table>
-        </div>
-        
-        <footer>
-            <p>Car Database Viewer | Data sourced from CSV files | Created with HTML, CSS & JavaScript</p>
-        </footer>
-    </div>
+    <div id="header-container"></div>
+    <br>
+    <!-- The summary tables are complex and would require their own data sources. This part is omitted for now. -->
+    <br>
+    <p>
+      <b style="font-size: 1.5em; font-weight: bold;">Tags:</b>
+      <!-- Tag definitions remain the same -->
+       <b style="font-size: 1.2em; font-weight: bold;">Ro</b>=Road Car; 
+       <b style="font-size: 1.2em; font-weight: bold;">Ra</b>=Racing Car; 
+       <b style="font-size: 1.2em; font-weight: bold;">PT</b>=Professionally Tuned; 
+       <b style="font-size: 1.2em; font-weight: bold;">CC</b>=Concept Car; 
+       <b style="font-size: 1.2em; font-weight: bold;">EC</b>=Electric Car; 
+       <b style="font-size: 1.2em; font-weight: bold;">Hb</b>=Hybrid Car; 
+       <b style="font-size: 1.2em; font-weight: bold;">Hp</b>=Hypercar; 
+       <b style="font-size: 1.2em; font-weight: bold;">KC</b>=Kei Car; 
+       <b style="font-size: 1.2em; font-weight: bold;">SC</b>=Safety Car; 
+       <b style="font-size: 1.2em; font-weight: bold;">PU</b>=Pickup Truck; 
+       <b style="font-size: 1.2em; font-weight: bold;">Kt</b>=Kart; 
+       <b style="font-size: 1.2em; font-weight: bold;">MS</b>=Midship; 
+       <b style="font-size: 1.2em; font-weight: bold;">VG</b>=Vision Gran Turismo; 
+       <b style="font-size: 1.2em; font-weight: bold;">GA</b>=Gran Turismo Award; 
+       <b style="font-size: 1.2em; font-weight: bold;">GT</b>=Gran Turismo Trophy; 
+       <b style="font-size: 1.2em; font-weight: bold;">G3</b>=GT300; 
+       <b style="font-size: 1.2em; font-weight: bold;">G5</b>=GT500; 
+       <b style="font-size: 1.2em; font-weight: bold;">LM</b>=Le Mans; 
+       <b style="font-size: 1.2em; font-weight: bold;">N24</b>=Nürburgring 24 Hours; 
+       <b style="font-size: 1.2em; font-weight: bold;">PP</b>=Pikes Peak; 
+       <b style="font-size: 1.2em; font-weight: bold;">WRC</b>=WRC
+    </p><br>
+    <table id="main-table" style="width:100%;">
+        <thead>
+            <tr id="0">
+                <th colspan="14">
+                    <div style="float: left; width: 33%;"><span style="font-size: 1.5em; font-weight: bold;">Collection: </span><span style="font-size: 1.5em; font-weight: bold;" id="a_o"></span><span style="font-size: 1.5em; font-weight: bold;">/</span><span style="font-size: 1.5em; font-weight: bold;" id="a_"></span></div>
+                    <div style="display: inline-block; width: 33%;"><span style="font-size: 1.5em; font-weight: bold;">Variations: </span><span style="font-size: 1.5em; font-weight: bold;" id="z_v"></span><span style="font-size: 1.5em; font-weight: bold;">/</span><span style="font-size: 1.5em; font-weight: bold;" id="z_"></span></div>
+                    <div style="float: right; width: 33%;"><span style="font-size: 1.5em; font-weight: bold;">Complete sets: </span><span style="font-size: 1.5em; font-weight: bold;" id="a_c"></span></div>
+                </th>
+                <th colspan="6"><span style="font-size: 1.5em; font-weight: bold;">Tuning Settings</span></th>
+            </tr>
+            <tr id="00">
+                <th onclick="sortTable(0)">#</th>
+                <th onclick="sortTable(1)">C</th>
+                <th onclick="sortTable(2)">Year</th>
+                <th onclick="sortTable(3)">Make</th>
+                <th onclick="sortTable(4)">Model</th>
+                <th onclick="sortTable(5)">Layt</th>
+                <th onclick="sortTable(6)">Asp</th>
+                <th onclick="sortTable(7)">PP</th>
+                <th onclick="sortTable(8)">New</th>
+                <th onclick="sortTable(9)">Legend</th>
+                <th onclick="sortTable(10)">Used</th>
+                <th onclick="sortTable(11)">Tags</th>
+                <th onclick="sortTable(12)">How to Obtain</th>
+                <th onclick="sortTable(13)">Own</th>
+                <th colspan="2">Tyres Suspension</th>
+                <th colspan="2">Diff Aero ECU Pwr</th>
+                <th colspan="2">Tran Max Top SPD</th>
+            </tr>
+        </thead>
+        <tbody id="car-table-body">
+            <!-- Car data will be populated here by JavaScript -->
+        </tbody>
+    </table>
 
     <script>
-        // Base URL for CSV files
-        const basePath = 'data/db/';
-        
-        // Parse CSV function
-        function parseCSV(csvText) {
-            const lines = csvText.split('\n');
+        document.addEventListener('DOMContentLoaded', function () {
+            loadAllData();
+        });
+
+        // Fetches and parses a CSV file.
+        async function fetchAndParseCSV(url) {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`Failed to load ${url}`);
+            const text = await response.text();
+            
+            const lines = text.trim().split('\n');
             const headers = lines[0].split(',').map(h => h.trim());
-            const rows = [];
             
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
-                
+            return lines.slice(1).map(line => {
                 const values = line.split(',');
-                const row = {};
-                
-                for (let j = 0; j < headers.length; j++) {
-                    row[headers[j]] = values[j] ? values[j].trim() : '';
-                }
-                
-                rows.push(row);
-            }
-            
-            return rows;
+                return headers.reduce((obj, header, index) => {
+                    obj[header] = values[index] ? values[index].trim() : '';
+                    return obj;
+                }, {});
+            });
         }
 
-        // Load data from CSV files using fetch
-        async function loadData() {
+        // Main function to load all data and build the page
+        async function loadAllData() {
             try {
-                // Show loading indicator
-                document.getElementById('loadingIndicator').style.display = 'block';
-                document.getElementById('errorMessage').style.display = 'none';
-                document.getElementById('successMessage').style.display = 'none';
-                
-                // Update loading status
-                document.getElementById('loadingStatus').textContent = 'Loading cars.csv...';
-                
-                // Load cars.csv
-                const carsResponse = await fetch(`${basePath}cars.csv`);
-                if (!carsResponse.ok) {
-                    throw new Error(`Failed to load cars.csv: ${carsResponse.status} ${carsResponse.statusText}`);
-                }
-                const carsText = await carsResponse.text();
-                
-                // Update loading status
-                document.getElementById('loadingStatus').textContent = 'Loading maker.csv...';
-                
-                // Load maker.csv
-                const makersResponse = await fetch(`${basePath}maker.csv`);
-                if (!makersResponse.ok) {
-                    throw new Error(`Failed to load maker.csv: ${makersResponse.status} ${makersResponse.statusText}`);
-                }
-                const makersText = await makersResponse.text();
-                
-                // Update loading status
-                document.getElementById('loadingStatus').textContent = 'Loading country.csv...';
-                
-                // Load country.csv
-                const countriesResponse = await fetch(`${basePath}country.csv`);
-                if (!countriesResponse.ok) {
-                    throw new Error(`Failed to load country.csv: ${countriesResponse.status} ${countriesResponse.statusText}`);
-                }
-                const countriesText = await countriesResponse.text();
-                
-                // Update loading status
-                document.getElementById('loadingStatus').textContent = 'Processing data...';
-                
-                // Parse CSV data
-                const cars = parseCSV(carsText);
-                const makers = parseCSV(makersText);
-                const countries = parseCSV(countriesText);
-                
-                // Create maps for quick lookup
-                const countryMap = {};
-                countries.forEach(country => {
-                    countryMap[country.ID] = { // Assuming 'ID' is the column name in country.csv
-                        name: country.Name,
-                        code: country.Code
-                    };
-                });
-                
-                const makerMap = {};
-                makers.forEach(maker => {
-                    const countryId = maker.Country; // Assuming 'Country' is the column name in maker.csv
-                    if (!countryMap[countryId]) {
-                        console.warn(`Country not found for maker: ${maker.Name} (country_id: ${countryId})`);
-                    }
-                    
-                    makerMap[maker.ID] = { // Assuming 'ID' is the column name in maker.csv
-                        name: maker.Name,
-                        country: countryMap[countryId] || { name: 'Unknown', code: '??' }
-                    };
-                });
-                
-                // Combine data
-                const combinedData = cars.map(car => {
-                    const makerId = car.Maker; // Assuming 'Maker' is the column name in cars.csv
-                    const maker = makerMap[makerId];
-                    
-                    if (!maker) {
-                        console.warn(`Maker not found for car: ${car.ShortName} (maker_id: ${makerId})`);
-                        return {
-                            carName: car.ShortName,
-                            makerName: 'Unknown Manufacturer',
-                            countryName: 'Unknown',
-                            countryCode: '??'
-                        };
-                    }
+                const [cars, manufacturers, countries, colors, stockperf] = await Promise.all([
+                    fetchAndParseCSV('data/cars.csv'),
+                    fetchAndParseCSV('data/maker.csv'),
+                    fetchAndParseCSV('data/country.csv'),
+                    fetchAndParseCSV('data/colors.csv'),
+                    fetchAndParseCSV('data/stockperf.csv')
+                ]);
+
+                // Create maps for efficient data lookup
+                const manufacturerMap = manufacturers.reduce((acc, m) => { acc[m.ID] = m; return acc; }, {});
+                const countryMap = countries.reduce((acc, c) => { acc[c.ID] = c; return acc; }, {});
+                const stockperfMap = stockperf.reduce((acc, p) => { acc[p.ID] = p; return acc; }, {});
+                const colorMap = colors.reduce((acc, color) => {
+                    if (!acc[color.CarID]) acc[color.CarID] = [];
+                    acc[color.CarID].push(color.ColorName);
+                    return acc;
+                }, {});
+
+                // Combine all data into a single array of car objects
+                const combinedCarData = cars.map(car => {
+                    const manufacturer = manufacturerMap[car.Maker];
+                    const country = manufacturer ? countryMap[manufacturer.Country] : null;
+                    const performance = stockperfMap[car.ID] || {};
+                    const carColors = colorMap[car.ID] || [];
                     
                     return {
-                        carName: car.ShortName, // Assuming 'ShortName' is the column name in cars.csv
-                        makerName: maker.name,
-                        countryName: maker.country.name,
-                        countryCode: maker.country.code
+                        ...car,
+                        MakeName: manufacturer ? manufacturer.Name : 'Unknown',
+                        MakerCode: manufacturer ? manufacturer.Code : '',
+                        CountryName: country ? country.Name : 'Unknown',
+                        CountryCode: country ? country.Code : '??',
+                        PP: performance.PP || '',
+                        Tyres: performance.Tyre || '',
+                        Colors: carColors
                     };
                 });
                 
-                // Show success message
-                document.getElementById('successMessage').style.display = 'block';
+                // Sort cars by Make to group them for headers
+                combinedCarData.sort((a, b) => a.MakeName.localeCompare(b.MakeName) || a.ShortName.localeCompare(b.ShortName));
+
+                buildHeaderTables(manufacturers, countries);
+                populateCarTable(combinedCarData);
+                runPostLoadScripts();
+
+            } catch (error) {
+                console.error("Error loading or processing data:", error);
+                document.getElementById('car-table-body').innerHTML = `<tr><td colspan="20" style="text-align:center; color:red;">Error loading data. Check console.</td></tr>`;
+            }
+        }
+        
+        // Builds the manufacturer/country summary tables in the header
+        function buildHeaderTables(manufacturers, countries) {
+             // This function can be complex. For now, let's keep it simple or assume a predefined structure.
+             // A full dynamic build would group manufacturers by country and generate the nested tables.
+             // This is a placeholder to show where that logic would go.
+             console.log("Header table generation would go here.");
+        }
+
+        // Populates the main table with car data
+        function populateCarTable(carData) {
+            const tbody = document.getElementById('car-table-body');
+            tbody.innerHTML = ''; 
+
+            let currentMake = '';
+            carData.forEach((car, index) => {
+                // Add a header row for each new manufacturer
+                if (car.MakeName !== currentMake) {
+                    currentMake = car.MakeName;
+                    const headerRow = document.createElement('tr');
+                    headerRow.innerHTML = `<th class="car-make-header" colspan="20">${currentMake}</th>`;
+                    tbody.appendChild(headerRow);
+                }
+
+                // Create the car's data row
+                const tr = document.createElement('tr');
+                tr.id = car.ID;
+
+                let colorsHtml = car.Colors.length > 0
+                    ? car.Colors.map(color => `<p class="${car.MakerCode} ${car.CountryCode} z v">${color}</p>`).join('')
+                    : `<p class="${car.MakerCode} ${car.CountryCode} z v">--</p>`;
                 
-                return combinedData;
-            } catch (error) {
-                console.error("Error loading data:", error);
-                document.getElementById('errorMessage').innerHTML = 
-                    `<i class="fas fa-exclamation-triangle"></i> ${error.message}`;
-                document.getElementById('errorMessage').style.display = 'block';
-                return [];
-            } finally {
-                // Hide loading indicator
-                document.getElementById('loadingIndicator').style.display = 'none';
-            }
-        }
+                const ownClasses = `a ${car.MakerCode} ${car.CountryCode}`;
 
-        // Display data in table
-        function displayData(cars) {
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = '';
-            
-            if (cars.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="4" style="text-align: center; padding: 30px;">
-                            <i class="fas fa-exclamation-circle" style="font-size: 3rem; color: #ccc; margin-bottom: 15px;"></i>
-                            <p>No car data available</p>
-                        </td>
-                    </tr>
+                // Note: Year, Layout, Aspiration, Prices, Tags, HowToObtain are missing from provided CSVs.
+                // These will be left blank until added to cars.csv or another file.
+                tr.innerHTML = `
+                    <th>${index + 1}</th>
+                    <td>${car.CountryCode}</td>
+                    <td>${car.Year || ''}</td>
+                    <td>${car.MakeName}</td>
+                    <td>${car.ShortName}</td>
+                    <td>${car.Layout || ''}</td>
+                    <td>${car.Aspiration || ''}</td>
+                    <td>${car.PP}</td>
+                    <td class="price">${car.PriceNew || ''}</td>
+                    <td class="price">${car.PriceLegend || ''}</td>
+                    <td class="price">${car.PriceUsed || ''}</td>
+                    <td>${car.Tags || ''}</td>
+                    <td>${car.HowToObtain || ''}</td>
+                    <td><div class="own-cell ${ownClasses}"></div>${colorsHtml}</td>
+                    <td>Tyr<br>BHA<br>ARB<br>DRC<br>DRE<br>NaFr<br>NCA<br>Toe<br>BrB</td>
+                    <td></td>
+                    <td>InT<br>AcS<br>BrS<br>ToD<br>DoF<br>ECU<br>Bal<br>Pos<br>PoR</td>
+                    <td></td>
+                    <td>1st<br>2nd<br>3rd<br>4th<br>5th<br>6th<br>7th<br>8th<br>Fnl</td>
+                    <td></td>
                 `;
-                return;
-            }
-            
-            cars.forEach(car => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><i class="fas fa-car" style="color: #3498db;"></i> ${car.carName}</td>
-                    <td><i class="fas fa-industry" style="color: #e74c3c;"></i> ${car.makerName}</td>
-                    <td><div class="country-flag" style="background-color: ${getCountryColor(car.countryName)}"></div> ${car.countryName}</td>
-                    <td>${car.countryCode}</td>
-                `;
-                tableBody.appendChild(row);
+                tbody.appendChild(tr);
             });
-            
-            // Update stats
-            updateStats(cars);
         }
 
-        // Generate a color based on country name
-        function getCountryColor(countryName) {
-            const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#d35400'];
-            let hash = 0;
-            for (let i = 0; i < countryName.length; i++) {
-                hash = countryName.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            const index = Math.abs(hash % colors.length);
-            return colors[index];
+        // --- Helper and Original Functions ---
+
+        function runPostLoadScripts() {
+            addThousandSeparators();
+            countClass();
+            totals();
         }
 
-        // Update statistics
-        function updateStats(cars) {
-            document.getElementById('totalCars').textContent = cars.length;
+        function addThousandSeparators() {
+            const priceCells = document.querySelectorAll('.price');
+            priceCells.forEach(cell => {
+                let text = cell.textContent.trim();
+                if (text && !isNaN(text)) {
+                    cell.textContent = parseFloat(text).toLocaleString();
+                }
+            });
+        }
+        
+        let lastSortedColumn = -1;
+        let lastSortAscending = true;
+
+        function sortTable(columnIndex) {
+            const table = document.getElementById("main-table");
+            const tbody = table.tBodies[0];
+            const rows = Array.from(tbody.querySelectorAll('tr[id]')); // Only sort rows with an ID (car rows)
             
-            // Count unique makers
-            const makers = new Set(cars.map(car => car.makerName));
-            document.getElementById('uniqueMakers').textContent = makers.size;
+            const ascending = (lastSortedColumn === columnIndex) ? !lastSortAscending : true;
+
+            rows.sort((a, b) => {
+                const aVal = a.cells[columnIndex].textContent.trim().replace(/,/g, '');
+                const bVal = b.cells[columnIndex].textContent.trim().replace(/,/g, '');
+                
+                const aIsNumber = !isNaN(parseFloat(aVal)) && isFinite(aVal);
+                const bIsNumber = !isNaN(parseFloat(bVal)) && isFinite(bVal);
+
+                if (aIsNumber && bIsNumber) {
+                    return (ascending ? 1 : -1) * (parseFloat(aVal) - parseFloat(bVal));
+                }
+                return (ascending ? 1 : -1) * aVal.localeCompare(bVal, undefined, { numeric: true });
+            });
             
-            // Count unique countries
-            const countries = new Set(cars.map(car => car.countryName));
-            document.getElementById('uniqueCountries').textContent = countries.size;
+            tbody.innerHTML = '';
+            let currentMake = '';
+            rows.forEach(row => {
+                const makeName = row.cells[3].textContent;
+                if (makeName !== currentMake) {
+                    currentMake = makeName;
+                    tbody.innerHTML += `<tr><th class="car-make-header" colspan="20">${currentMake}</th></tr>`;
+                }
+                tbody.appendChild(row);
+            });
+            
+            lastSortedColumn = columnIndex;
+            lastSortAscending = ascending;
+        }
+        
+        function countClass() {
+             const rows = document.querySelectorAll('#main-table tbody tr[id]');
+             rows.forEach(row => {
+                const zCount = row.querySelectorAll('.z').length;
+                const vCount = row.querySelectorAll('.v').length;
+                const ratio = zCount > 0 ? (vCount / zCount * 100) : 0;
+                const div = row.querySelector('div.own-cell');
+                if (div) {
+                    div.className = 'own-cell ' + div.className; // Reset classes but keep original
+                    if (vCount === 0) div.classList.add('n');
+                    else {
+                        div.classList.add('o');
+                        if (zCount === vCount) div.classList.add('c');
+                    }
+                    div.textContent = ` [${zCount - vCount}] ${ratio.toFixed(0).padStart(3, '0')}% ${vCount}/${zCount}`;
+                }
+             });
+        }
+        
+        function totals() {
+            // This function remains complex and depends on the specific IDs in the header.
+            // It will need the header to be built first. We'll leave it as is for now.
+            // A more robust solution would be to calculate these totals from the data directly.
+            console.log("Totals calculation running.");
         }
 
-        // Filter function
-        function filterCars(cars, searchTerm) {
-            if (!searchTerm) {
-                return cars;
-            }
-            
-            const term = searchTerm.toLowerCase();
-            return cars.filter(car => 
-                car.carName.toLowerCase().includes(term) ||
-                car.makerName.toLowerCase().includes(term) ||
-                car.countryName.toLowerCase().includes(term) ||
-                (car.countryCode && car.countryCode.toLowerCase().includes(term))
-            );
-        }
-
-        // Initialize the page
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Show loading state
-            document.getElementById('loadingIndicator').style.display = 'block';
-            
-            let carData = [];
-            
-            try {
-                carData = await loadData();
-                displayData(carData);
-            } catch (error) {
-                console.error("Initialization error:", error);
-            }
-            
-            // Set up event listeners
-            document.getElementById('searchInput').addEventListener('input', () => {
-                const searchTerm = document.getElementById('searchInput').value;
-                const filteredData = filterCars(carData, searchTerm);
-                displayData(filteredData);
-            });
-            
-            document.getElementById('resetBtn').addEventListener('click', () => {
-                document.getElementById('searchInput').value = '';
-                displayData(carData);
-            });
-            
-            document.getElementById('refreshBtn').addEventListener('click', async () => {
-                document.getElementById('loadingIndicator').style.display = 'block';
-                carData = await loadData();
-                displayData(carData);
-            });
-        });
     </script>
 </body>
 </html>
