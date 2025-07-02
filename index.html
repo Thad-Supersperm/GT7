@@ -5,14 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { font-family: sans-serif; }
-        table, th, td { border: 1px solid black; border-collapse: collapse; padding: 4px; vertical-align: top;}
+        table, th, td { border: 1px solid black; border-collapse: collapse; padding: 4px; vertical-align: top; }
         #main-table tbody tr:nth-child(even) { background-color: #D6EEEE; }
-        p { white-space: nowrap; display: block; margin: 2px 0; }
-        div.own-cell { font-weight: bold; }
+        .own-cell div { display: flex; align-items: center; white-space: nowrap; }
+        .own-cell input { margin-right: 5px; }
+        .own-cell label { display: block; }
         .q { vertical-align: bottom; border: none; }
-        .n::before, .z::before, .t::before { content: "\25CE"; } /* Empty Circle */
-        .o::before { content: "\25CF"; } /* Full Circle */
-        .c::before, .v::before, .y::before { content: "\25C9"; } /* Fisheye */
         #main-table thead th { cursor: pointer; user-select: none; }
         .price { text-align: right; }
         .car-make-header { text-align: center; background-color: #c0c0c0; font-size: 1.2em; }
@@ -21,11 +19,8 @@
 <body>
     <div id="header-container"></div>
     <br>
-    <!-- The summary tables are complex and would require their own data sources. This part is omitted for now. -->
-    <br>
     <p>
       <b style="font-size: 1.5em; font-weight: bold;">Tags:</b>
-      <!-- Tag definitions remain the same -->
        <b style="font-size: 1.2em; font-weight: bold;">Ro</b>=Road Car; 
        <b style="font-size: 1.2em; font-weight: bold;">Ra</b>=Racing Car; 
        <b style="font-size: 1.2em; font-weight: bold;">PT</b>=Professionally Tuned; 
@@ -88,15 +83,12 @@
             loadAllData();
         });
 
-        // Fetches and parses a CSV file.
         async function fetchAndParseCSV(url) {
             const response = await fetch(url);
             if (!response.ok) throw new Error(`Failed to load ${url}`);
             const text = await response.text();
-            
             const lines = text.trim().split('\n');
             const headers = lines[0].split(',').map(h => h.trim());
-            
             return lines.slice(1).map(line => {
                 const values = line.split(',');
                 return headers.reduce((obj, header, index) => {
@@ -106,10 +98,8 @@
             });
         }
 
-        // Main function to load all data and build the page
         async function loadAllData() {
             try {
-                // *** THIS IS THE CORRECTED PART ***
                 const basePath = 'data/db/';
                 const [cars, manufacturers, countries, colors, stockperf] = await Promise.all([
                     fetchAndParseCSV(basePath + 'cars.csv'),
@@ -119,7 +109,6 @@
                     fetchAndParseCSV(basePath + 'stockperf.csv')
                 ]);
 
-                // Create maps for efficient data lookup
                 const manufacturerMap = manufacturers.reduce((acc, m) => { acc[m.ID] = m; return acc; }, {});
                 const countryMap = countries.reduce((acc, c) => { acc[c.ID] = c; return acc; }, {});
                 const stockperfMap = stockperf.reduce((acc, p) => { acc[p.ID] = p; return acc; }, {});
@@ -129,29 +118,21 @@
                     return acc;
                 }, {});
 
-                // Combine all data into a single array of car objects
                 const combinedCarData = cars.map(car => {
                     const manufacturer = manufacturerMap[car.Maker];
                     const country = manufacturer ? countryMap[manufacturer.Country] : null;
                     const performance = stockperfMap[car.ID] || {};
-                    const carColors = colorMap[car.ID] || [];
-                    
                     return {
                         ...car,
                         MakeName: manufacturer ? manufacturer.Name : 'Unknown',
-                        MakerCode: manufacturer ? manufacturer.Code : '',
-                        CountryName: country ? country.Name : 'Unknown',
                         CountryCode: country ? country.Code : '??',
                         PP: performance.PP || '',
-                        Tyres: performance.Tyre || '',
-                        Colors: carColors
+                        Colors: colorMap[car.ID] || []
                     };
                 });
                 
-                // Sort cars by Make to group them for headers
                 combinedCarData.sort((a, b) => a.MakeName.localeCompare(b.MakeName) || a.ShortName.localeCompare(b.ShortName));
 
-                buildHeaderTables(manufacturers, countries);
                 populateCarTable(combinedCarData);
                 runPostLoadScripts();
 
@@ -160,13 +141,7 @@
                 document.getElementById('car-table-body').innerHTML = `<tr><td colspan="20" style="text-align:center; color:red;">Error loading data. Check console.</td></tr>`;
             }
         }
-        
-        // Builds the manufacturer/country summary tables in the header
-        function buildHeaderTables(manufacturers, countries) {
-             console.log("Header table generation would go here.");
-        }
 
-        // Populates the main table with car data
         function populateCarTable(carData) {
             const tbody = document.getElementById('car-table-body');
             tbody.innerHTML = ''; 
@@ -175,20 +150,24 @@
             carData.forEach((car, index) => {
                 if (car.MakeName !== currentMake) {
                     currentMake = car.MakeName;
-                    const headerRow = document.createElement('tr');
-                    headerRow.innerHTML = `<th class="car-make-header" colspan="20">${currentMake}</th>`;
-                    tbody.appendChild(headerRow);
+                    tbody.innerHTML += `<tr><th class="car-make-header" colspan="20">${currentMake}</th></tr>`;
                 }
 
                 const tr = document.createElement('tr');
                 tr.id = car.ID;
 
-                let colorsHtml = car.Colors.length > 0
-                    ? car.Colors.map(color => `<p class="${car.MakerCode} ${car.CountryCode} z v">${color}</p>`).join('')
-                    : `<p class="${car.MakerCode} ${car.CountryCode} z v">--</p>`;
+                let colorsHtml = '';
+                if (car.Colors.length > 0) {
+                    colorsHtml = car.Colors.map(color => {
+                        // Create a safe ID for the checkbox from the car ID and color name
+                        const safeColorName = color.replace(/[^a-zA-Z0-9]/g, '');
+                        const checkboxId = `check-${car.ID}-${safeColorName}`;
+                        return `<div><input type="checkbox" id="${checkboxId}" class="color-checkbox"><label for="${checkboxId}">${color}</label></div>`;
+                    }).join('');
+                } else {
+                    colorsHtml = `<div>--</div>`;
+                }
                 
-                const ownClasses = `a ${car.MakerCode} ${car.CountryCode}`;
-
                 tr.innerHTML = `
                     <th>${index + 1}</th>
                     <td>${car.CountryCode}</td>
@@ -203,7 +182,7 @@
                     <td class="price">${car.PriceUsed || ''}</td>
                     <td>${car.Tags || ''}</td>
                     <td>${car.HowToObtain || ''}</td>
-                    <td><div class="own-cell ${ownClasses}"></div>${colorsHtml}</td>
+                    <td class="own-cell">${colorsHtml}</td>
                     <td>Tyr<br>BHA<br>ARB<br>DRC<br>DRE<br>NaFr<br>NCA<br>Toe<br>BrB</td>
                     <td></td>
                     <td>InT<br>AcS<br>BrS<br>ToD<br>DoF<br>ECU<br>Bal<br>Pos<br>PoR</td>
@@ -215,12 +194,43 @@
             });
         }
 
+        // --- Checkbox Save/Load Functions ---
+
+        function saveCheckboxState() {
+            const checkboxes = document.querySelectorAll('.color-checkbox');
+            const checkedIds = [];
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    checkedIds.push(cb.id);
+                }
+            });
+            localStorage.setItem('gt7ColorCheckboxes', JSON.stringify(checkedIds));
+        }
+
+        function loadCheckboxState() {
+            const checkedIds = JSON.parse(localStorage.getItem('gt7ColorCheckboxes') || '[]');
+            checkedIds.forEach(id => {
+                const checkbox = document.getElementById(id);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            });
+        }
+
+        function addCheckboxListeners() {
+            const checkboxes = document.querySelectorAll('.color-checkbox');
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', saveCheckboxState);
+            });
+        }
+
         // --- Helper and Original Functions ---
 
         function runPostLoadScripts() {
             addThousandSeparators();
-            countClass();
-            totals();
+            loadCheckboxState(); // Load saved checks
+            addCheckboxListeners(); // Add listeners to save future clicks
+            // Any other functions like totals() would go here
         }
 
         function addThousandSeparators() {
@@ -246,10 +256,8 @@
             rows.sort((a, b) => {
                 const aVal = a.cells[columnIndex].textContent.trim().replace(/,/g, '');
                 const bVal = b.cells[columnIndex].textContent.trim().replace(/,/g, '');
-                
                 const aIsNumber = !isNaN(parseFloat(aVal)) && isFinite(aVal);
                 const bIsNumber = !isNaN(parseFloat(bVal)) && isFinite(bVal);
-
                 if (aIsNumber && bIsNumber) {
                     return (ascending ? 1 : -1) * (parseFloat(aVal) - parseFloat(bVal));
                 }
@@ -269,29 +277,6 @@
             
             lastSortedColumn = columnIndex;
             lastSortAscending = ascending;
-        }
-        
-        function countClass() {
-             const rows = document.querySelectorAll('#main-table tbody tr[id]');
-             rows.forEach(row => {
-                const zCount = row.querySelectorAll('.z').length;
-                const vCount = row.querySelectorAll('.v').length;
-                const ratio = zCount > 0 ? (vCount / zCount * 100) : 0;
-                const div = row.querySelector('div.own-cell');
-                if (div) {
-                    div.className = 'own-cell ' + div.className;
-                    if (vCount === 0) div.classList.add('n');
-                    else {
-                        div.classList.add('o');
-                        if (zCount === vCount) div.classList.add('c');
-                    }
-                    div.textContent = ` [${zCount - vCount}] ${ratio.toFixed(0).padStart(3, '0')}% ${vCount}/${zCount}`;
-                }
-             });
-        }
-        
-        function totals() {
-            console.log("Totals calculation running.");
         }
     </script>
 </body>
