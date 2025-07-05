@@ -3,14 +3,16 @@
 <head>
     <title>GT7 Carlist</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 1. Add the Supabase library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    
     <style>
         body { font-family: sans-serif; }
-        table, th, td { border: 1px solid black; border-collapse: collapse; padding: 4px; vertical-align: top; }
+        table, th, td { border: 1px solid black; border-collapse: collapse; padding: 4px; vertical-align: top;}
         #main-table tbody tr:nth-child(even) { background-color: #D6EEEE; }
         .own-cell div { display: flex; align-items: center; white-space: nowrap; }
-        .own-cell input { margin-right: 5px; }
-        .own-cell label { display: block; }
-        .q { vertical-align: bottom; border: none; }
+        .own-cell input { margin-right: 5px; cursor: pointer; }
+        .own-cell label { display: block; cursor: pointer; }
         #main-table thead th { cursor: pointer; user-select: none; }
         .price { text-align: right; }
         .car-make-header { text-align: center; background-color: #c0c0c0; font-size: 1.2em; }
@@ -54,32 +56,74 @@
                 <th colspan="6"><span style="font-size: 1.5em; font-weight: bold;">Tuning Settings</span></th>
             </tr>
             <tr id="00">
-                <th onclick="sortTable(0)">#</th>
-                <th onclick="sortTable(1)">C</th>
-                <th onclick="sortTable(2)">Year</th>
-                <th onclick="sortTable(3)">Make</th>
-                <th onclick="sortTable(4)">Model</th>
-                <th onclick="sortTable(5)">Layt</th>
-                <th onclick="sortTable(6)">Asp</th>
-                <th onclick="sortTable(7)">PP</th>
-                <th onclick="sortTable(8)">New</th>
-                <th onclick="sortTable(9)">Legend</th>
-                <th onclick="sortTable(10)">Used</th>
-                <th onclick="sortTable(11)">Tags</th>
-                <th onclick="sortTable(12)">How to Obtain</th>
-                <th onclick="sortTable(13)">Own</th>
-                <th colspan="2">Tyres Suspension</th>
-                <th colspan="2">Diff Aero ECU Pwr</th>
-                <th colspan="2">Tran Max Top SPD</th>
+                <th onclick="sortTable(0)">#</th><th onclick="sortTable(1)">C</th><th onclick="sortTable(2)">Year</th><th onclick="sortTable(3)">Make</th><th onclick="sortTable(4)">Model</th><th onclick="sortTable(5)">Layt</th><th onclick="sortTable(6)">Asp</th><th onclick="sortTable(7)">PP</th><th onclick="sortTable(8)">New</th><th onclick="sortTable(9)">Legend</th><th onclick="sortTable(10)">Used</th><th onclick="sortTable(11)">Tags</th><th onclick="sortTable(12)">How to Obtain</th><th onclick="sortTable(13)">Own</th>
+                <th colspan="2">Tyres Suspension</th><th colspan="2">Diff Aero ECU Pwr</th><th colspan="2">Tran Max Top SPD</th>
             </tr>
         </thead>
-        <tbody id="car-table-body">
-            <!-- Car data will be populated here by JavaScript -->
-        </tbody>
+        <tbody id="car-table-body"></tbody>
     </table>
 
     <script>
+        // --- SUPABASE SETUP ---
+
+        let supabase;
+        const SELECTIONS_ID = 'shared-checklist'; // A unique key for our single data row
+
+        function initializeSupabase() {
+            // *** PASTE YOUR SUPABASE KEYS HERE ***
+            const SUPABASE_URL = 'YOUR_SUPABASE_URL'; 
+            const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+            if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
+                console.warn("Supabase keys are not set. Database functionality will be disabled.");
+                return;
+            }
+            supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+        
+        async function saveCheckboxState() {
+            if (!supabase) return;
+            const checkedIds = Array.from(document.querySelectorAll('.color-checkbox:checked')).map(cb => cb.id);
+            
+            const { error } = await supabase
+                .from('selections') // The table you created
+                .upsert({ id: SELECTIONS_ID, checked_ids: checkedIds }); // upsert = update or insert
+            
+            if (error) console.error("Error saving selections:", error);
+            else console.log("Selections saved successfully!");
+        }
+
+        async function loadCheckboxState() {
+            if (!supabase) return;
+            
+            const { data, error } = await supabase
+                .from('selections')
+                .select('checked_ids')
+                .eq('id', SELECTIONS_ID)
+                .single();
+
+            // Ignore "no rows" error, it's normal on first load
+            if (error && error.code !== 'PGRST116') {
+                console.error("Error loading selections:", error);
+            } else if (data && data.checked_ids) {
+                data.checked_ids.forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) checkbox.checked = true;
+                });
+                console.log(data.checked_ids.length + " selections loaded from database.");
+            }
+        }
+        
+        function addCheckboxListeners() {
+            document.querySelectorAll('.color-checkbox').forEach(cb => {
+                cb.addEventListener('change', saveCheckboxState);
+            });
+        }
+        
+        // --- CORE APPLICATION LOGIC ---
+
         document.addEventListener('DOMContentLoaded', function () {
+            initializeSupabase();
             loadAllData();
         });
 
@@ -122,17 +166,10 @@
                     const manufacturer = manufacturerMap[car.Maker];
                     const country = manufacturer ? countryMap[manufacturer.Country] : null;
                     const performance = stockperfMap[car.ID] || {};
-                    return {
-                        ...car,
-                        MakeName: manufacturer ? manufacturer.Name : 'Unknown',
-                        CountryCode: country ? country.Code : '??',
-                        PP: performance.PP || '',
-                        Colors: colorMap[car.ID] || []
-                    };
+                    return { ...car, MakeName: manufacturer ? manufacturer.Name : 'Unknown', CountryCode: country ? country.Code : '??', PP: performance.PP || '', Colors: colorMap[car.ID] || [] };
                 });
                 
                 combinedCarData.sort((a, b) => a.MakeName.localeCompare(b.MakeName) || a.ShortName.localeCompare(b.ShortName));
-
                 populateCarTable(combinedCarData);
                 runPostLoadScripts();
 
@@ -145,101 +182,36 @@
         function populateCarTable(carData) {
             const tbody = document.getElementById('car-table-body');
             tbody.innerHTML = ''; 
-
             let currentMake = '';
             carData.forEach((car, index) => {
                 if (car.MakeName !== currentMake) {
                     currentMake = car.MakeName;
                     tbody.innerHTML += `<tr><th class="car-make-header" colspan="20">${currentMake}</th></tr>`;
                 }
-
                 const tr = document.createElement('tr');
                 tr.id = car.ID;
-
-                let colorsHtml = '';
-                if (car.Colors.length > 0) {
-                    colorsHtml = car.Colors.map(color => {
-                        // Create a safe ID for the checkbox from the car ID and color name
-                        const safeColorName = color.replace(/[^a-zA-Z0-9]/g, '');
+                let colorsHtml = car.Colors.length > 0
+                    ? car.Colors.map(color => {
+                        const safeColorName = color.replace(/[^a-zA-Z0-9]/g, '-');
                         const checkboxId = `check-${car.ID}-${safeColorName}`;
                         return `<div><input type="checkbox" id="${checkboxId}" class="color-checkbox"><label for="${checkboxId}">${color}</label></div>`;
-                    }).join('');
-                } else {
-                    colorsHtml = `<div>--</div>`;
-                }
-                
-                tr.innerHTML = `
-                    <th>${index + 1}</th>
-                    <td>${car.CountryCode}</td>
-                    <td>${car.Year || ''}</td>
-                    <td>${car.MakeName}</td>
-                    <td>${car.ShortName}</td>
-                    <td>${car.Layout || ''}</td>
-                    <td>${car.Aspiration || ''}</td>
-                    <td>${car.PP}</td>
-                    <td class="price">${car.PriceNew || ''}</td>
-                    <td class="price">${car.PriceLegend || ''}</td>
-                    <td class="price">${car.PriceUsed || ''}</td>
-                    <td>${car.Tags || ''}</td>
-                    <td>${car.HowToObtain || ''}</td>
-                    <td class="own-cell">${colorsHtml}</td>
-                    <td>Tyr<br>BHA<br>ARB<br>DRC<br>DRE<br>NaFr<br>NCA<br>Toe<br>BrB</td>
-                    <td></td>
-                    <td>InT<br>AcS<br>BrS<br>ToD<br>DoF<br>ECU<br>Bal<br>Pos<br>PoR</td>
-                    <td></td>
-                    <td>1st<br>2nd<br>3rd<br>4th<br>5th<br>6th<br>7th<br>8th<br>Fnl</td>
-                    <td></td>
-                `;
+                    }).join('')
+                    : `<div>--</div>`;
+                tr.innerHTML = `<th>${index + 1}</th><td>${car.CountryCode}</td><td>${car.Year || ''}</td><td>${car.MakeName}</td><td>${car.ShortName}</td><td>${car.Layout || ''}</td><td>${car.Aspiration || ''}</td><td>${car.PP}</td><td class="price">${car.PriceNew || ''}</td><td class="price">${car.PriceLegend || ''}</td><td class="price">${car.PriceUsed || ''}</td><td>${car.Tags || ''}</td><td>${car.HowToObtain || ''}</td><td class="own-cell">${colorsHtml}</td><td>Tyr<br>BHA<br>ARB<br>DRC<br>DRE<br>NaFr<br>NCA<br>Toe<br>BrB</td><td></td><td>InT<br>AcS<br>BrS<br>ToD<br>DoF<br>ECU<br>Bal<br>Pos<br>PoR</td><td></td><td>1st<br>2nd<br>3rd<br>4th<br>5th<br>6th<br>7th<br>8th<br>Fnl</td><td></td>`;
                 tbody.appendChild(tr);
             });
         }
-
-        // --- Checkbox Save/Load Functions ---
-
-        function saveCheckboxState() {
-            const checkboxes = document.querySelectorAll('.color-checkbox');
-            const checkedIds = [];
-            checkboxes.forEach(cb => {
-                if (cb.checked) {
-                    checkedIds.push(cb.id);
-                }
-            });
-            localStorage.setItem('gt7ColorCheckboxes', JSON.stringify(checkedIds));
-        }
-
-        function loadCheckboxState() {
-            const checkedIds = JSON.parse(localStorage.getItem('gt7ColorCheckboxes') || '[]');
-            checkedIds.forEach(id => {
-                const checkbox = document.getElementById(id);
-                if (checkbox) {
-                    checkbox.checked = true;
-                }
-            });
-        }
-
-        function addCheckboxListeners() {
-            const checkboxes = document.querySelectorAll('.color-checkbox');
-            checkboxes.forEach(cb => {
-                cb.addEventListener('change', saveCheckboxState);
-            });
-        }
-
-        // --- Helper and Original Functions ---
-
-        function runPostLoadScripts() {
+        
+        async function runPostLoadScripts() {
             addThousandSeparators();
-            loadCheckboxState(); // Load saved checks
-            addCheckboxListeners(); // Add listeners to save future clicks
-            // Any other functions like totals() would go here
+            await loadCheckboxState(); // Load from Supabase
+            addCheckboxListeners();    // Add listeners to save changes
         }
 
         function addThousandSeparators() {
-            const priceCells = document.querySelectorAll('.price');
-            priceCells.forEach(cell => {
+            document.querySelectorAll('.price').forEach(cell => {
                 let text = cell.textContent.trim();
-                if (text && !isNaN(text)) {
-                    cell.textContent = parseFloat(text).toLocaleString();
-                }
+                if (text && !isNaN(text)) cell.textContent = parseFloat(text).toLocaleString();
             });
         }
         
@@ -250,20 +222,15 @@
             const table = document.getElementById("main-table");
             const tbody = table.tBodies[0];
             const rows = Array.from(tbody.querySelectorAll('tr[id]'));
-            
             const ascending = (lastSortedColumn === columnIndex) ? !lastSortAscending : true;
-
             rows.sort((a, b) => {
                 const aVal = a.cells[columnIndex].textContent.trim().replace(/,/g, '');
                 const bVal = b.cells[columnIndex].textContent.trim().replace(/,/g, '');
                 const aIsNumber = !isNaN(parseFloat(aVal)) && isFinite(aVal);
                 const bIsNumber = !isNaN(parseFloat(bVal)) && isFinite(bVal);
-                if (aIsNumber && bIsNumber) {
-                    return (ascending ? 1 : -1) * (parseFloat(aVal) - parseFloat(bVal));
-                }
+                if (aIsNumber && bIsNumber) return (ascending ? 1 : -1) * (parseFloat(aVal) - parseFloat(bVal));
                 return (ascending ? 1 : -1) * aVal.localeCompare(bVal, undefined, { numeric: true });
             });
-            
             tbody.innerHTML = '';
             let currentMake = '';
             rows.forEach(row => {
@@ -274,9 +241,9 @@
                 }
                 tbody.appendChild(row);
             });
-            
             lastSortedColumn = columnIndex;
             lastSortAscending = ascending;
+            addCheckboxListeners();
         }
     </script>
 </body>
