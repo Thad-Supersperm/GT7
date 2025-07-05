@@ -1,250 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>GT7 Carlist</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 1. Add the Supabase library -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    
-    <style>
-        body { font-family: sans-serif; }
-        table, th, td { border: 1px solid black; border-collapse: collapse; padding: 4px; vertical-align: top;}
-        #main-table tbody tr:nth-child(even) { background-color: #D6EEEE; }
-        .own-cell div { display: flex; align-items: center; white-space: nowrap; }
-        .own-cell input { margin-right: 5px; cursor: pointer; }
-        .own-cell label { display: block; cursor: pointer; }
-        #main-table thead th { cursor: pointer; user-select: none; }
-        .price { text-align: right; }
-        .car-make-header { text-align: center; background-color: #c0c0c0; font-size: 1.2em; }
-    </style>
+    <title>GT7 Car Checklist</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Papa Parse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <div id="header-container"></div>
-    <br>
-    <p>
-      <b style="font-size: 1.5em; font-weight: bold;">Tags:</b>
-       <b style="font-size: 1.2em; font-weight: bold;">Ro</b>=Road Car; 
-       <b style="font-size: 1.2em; font-weight: bold;">Ra</b>=Racing Car; 
-       <b style="font-size: 1.2em; font-weight: bold;">PT</b>=Professionally Tuned; 
-       <b style="font-size: 1.2em; font-weight: bold;">CC</b>=Concept Car; 
-       <b style="font-size: 1.2em; font-weight: bold;">EC</b>=Electric Car; 
-       <b style="font-size: 1.2em; font-weight: bold;">Hb</b>=Hybrid Car; 
-       <b style="font-size: 1.2em; font-weight: bold;">Hp</b>=Hypercar; 
-       <b style="font-size: 1.2em; font-weight: bold;">KC</b>=Kei Car; 
-       <b style="font-size: 1.2em; font-weight: bold;">SC</b>=Safety Car; 
-       <b style="font-size: 1.2em; font-weight: bold;">PU</b>=Pickup Truck; 
-       <b style="font-size: 1.2em; font-weight: bold;">Kt</b>=Kart; 
-       <b style="font-size: 1.2em; font-weight: bold;">MS</b>=Midship; 
-       <b style="font-size: 1.2em; font-weight: bold;">VG</b>=Vision Gran Turismo; 
-       <b style="font-size: 1.2em; font-weight: bold;">GA</b>=Gran Turismo Award; 
-       <b style="font-size: 1.2em; font-weight: bold;">GT</b>=Gran Turismo Trophy; 
-       <b style="font-size: 1.2em; font-weight: bold;">G3</b>=GT300; 
-       <b style="font-size: 1.2em; font-weight: bold;">G5</b>=GT500; 
-       <b style="font-size: 1.2em; font-weight: bold;">LM</b>=Le Mans; 
-       <b style="font-size: 1.2em; font-weight: bold;">N24</b>=Nürburgring 24 Hours; 
-       <b style="font-size: 1.2em; font-weight: bold;">PP</b>=Pikes Peak; 
-       <b style="font-size: 1.2em; font-weight: bold;">WRC</b>=WRC
-    </p><br>
-    <table id="main-table" style="width:100%;">
-        <thead>
-            <tr id="0">
-                <th colspan="14">
-                    <div style="float: left; width: 33%;"><span style="font-size: 1.5em; font-weight: bold;">Collection: </span><span style="font-size: 1.5em; font-weight: bold;" id="a_o"></span><span style="font-size: 1.5em; font-weight: bold;">/</span><span style="font-size: 1.5em; font-weight: bold;" id="a_"></span></div>
-                    <div style="display: inline-block; width: 33%;"><span style="font-size: 1.5em; font-weight: bold;">Variations: </span><span style="font-size: 1.5em; font-weight: bold;" id="z_v"></span><span style="font-size: 1.5em; font-weight: bold;">/</span><span style="font-size: 1.5em; font-weight: bold;" id="z_"></span></div>
-                    <div style="float: right; width: 33%;"><span style="font-size: 1.5em; font-weight: bold;">Complete sets: </span><span style="font-size: 1.5em; font-weight: bold;" id="a_c"></span></div>
-                </th>
-                <th colspan="6"><span style="font-size: 1.5em; font-weight: bold;">Tuning Settings</span></th>
-            </tr>
-            <tr id="00">
-                <th onclick="sortTable(0)">#</th><th onclick="sortTable(1)">C</th><th onclick="sortTable(2)">Year</th><th onclick="sortTable(3)">Make</th><th onclick="sortTable(4)">Model</th><th onclick="sortTable(5)">Layt</th><th onclick="sortTable(6)">Asp</th><th onclick="sortTable(7)">PP</th><th onclick="sortTable(8)">New</th><th onclick="sortTable(9)">Legend</th><th onclick="sortTable(10)">Used</th><th onclick="sortTable(11)">Tags</th><th onclick="sortTable(12)">How to Obtain</th><th onclick="sortTable(13)">Own</th>
-                <th colspan="2">Tyres Suspension</th><th colspan="2">Diff Aero ECU Pwr</th><th colspan="2">Tran Max Top SPD</th>
-            </tr>
-        </thead>
-        <tbody id="car-table-body"></tbody>
-    </table>
 
-    <script>
-        // --- SUPABASE SETUP ---
+    <header>
+        <h1>GT7 Car Collection</h1>
+        <div id="auth-section">
+            <button id="login-button">Login with GitHub</button>
+            <div id="user-info" class="hidden">
+                <span id="user-email"></span>
+                <button id="logout-button">Logout</button>
+            </div>
+        </div>
+    </header>
 
-        let supabase;
-        const SELECTIONS_ID = 'shared-checklist'; // A unique key for our single data row
+    <main id="table-container">
+        <p id="loading-message">Please log in to load your garage...</p>
+        <table id="car-table" class="hidden">
+            <thead>
+                <tr>
+                    <th class="own-header">Own</th>
+                    <th>Car Name</th>
+                    <th>Maker</th>
+                    <th>Country</th>
+                    <th>Stock Performance</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Car data will be injected here by JavaScript -->
+            </tbody>
+        </table>
+    </main>
 
-        function initializeSupabase() {
-            // *** PASTE YOUR SUPABASE KEYS HERE ***
-            const SUPABASE_URL = 'https://ayxfeividbydjtuohyjv.supabase.co'; 
-            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5eGZlaXZpZGJ5ZGp0dW9oeWp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3MTA5MzYsImV4cCI6MjA2NzI4NjkzNn0.zeWkQfOqGXQVq8IzLgUzAMkWi9rvxeD9vvMt4U7Gzu0';
-
-            if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
-                console.warn("Supabase keys are not set. Database functionality will be disabled.");
-                return;
-            }
-            supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
-        
-        async function saveCheckboxState() {
-            if (!supabase) return;
-            const checkedIds = Array.from(document.querySelectorAll('.color-checkbox:checked')).map(cb => cb.id);
-            
-            const { error } = await supabase
-                .from('selections') // The table you created
-                .upsert({ id: SELECTIONS_ID, checked_ids: checkedIds }); // upsert = update or insert
-            
-            if (error) console.error("Error saving selections:", error);
-            else console.log("Selections saved successfully!");
-        }
-
-        async function loadCheckboxState() {
-            if (!supabase) return;
-            
-            const { data, error } = await supabase
-                .from('selections')
-                .select('checked_ids')
-                .eq('id', SELECTIONS_ID)
-                .single();
-
-            // Ignore "no rows" error, it's normal on first load
-            if (error && error.code !== 'PGRST116') {
-                console.error("Error loading selections:", error);
-            } else if (data && data.checked_ids) {
-                data.checked_ids.forEach(id => {
-                    const checkbox = document.getElementById(id);
-                    if (checkbox) checkbox.checked = true;
-                });
-                console.log(data.checked_ids.length + " selections loaded from database.");
-            }
-        }
-        
-        function addCheckboxListeners() {
-            document.querySelectorAll('.color-checkbox').forEach(cb => {
-                cb.addEventListener('change', saveCheckboxState);
-            });
-        }
-        
-        // --- CORE APPLICATION LOGIC ---
-
-        document.addEventListener('DOMContentLoaded', function () {
-            initializeSupabase();
-            loadAllData();
-        });
-
-        async function fetchAndParseCSV(url) {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`Failed to load ${url}`);
-            const text = await response.text();
-            const lines = text.trim().split('\n');
-            const headers = lines[0].split(',').map(h => h.trim());
-            return lines.slice(1).map(line => {
-                const values = line.split(',');
-                return headers.reduce((obj, header, index) => {
-                    obj[header] = values[index] ? values[index].trim() : '';
-                    return obj;
-                }, {});
-            });
-        }
-
-        async function loadAllData() {
-            try {
-                const basePath = 'data/db/';
-                const [cars, manufacturers, countries, colors, stockperf] = await Promise.all([
-                    fetchAndParseCSV(basePath + 'cars.csv'),
-                    fetchAndParseCSV(basePath + 'maker.csv'),
-                    fetchAndParseCSV(basePath + 'country.csv'),
-                    fetchAndParseCSV(basePath + 'colors.csv'),
-                    fetchAndParseCSV(basePath + 'stockperf.csv')
-                ]);
-
-                const manufacturerMap = manufacturers.reduce((acc, m) => { acc[m.ID] = m; return acc; }, {});
-                const countryMap = countries.reduce((acc, c) => { acc[c.ID] = c; return acc; }, {});
-                const stockperfMap = stockperf.reduce((acc, p) => { acc[p.ID] = p; return acc; }, {});
-                const colorMap = colors.reduce((acc, color) => {
-                    if (!acc[color.CarID]) acc[color.CarID] = [];
-                    acc[color.CarID].push(color.ColorName);
-                    return acc;
-                }, {});
-
-                const combinedCarData = cars.map(car => {
-                    const manufacturer = manufacturerMap[car.Maker];
-                    const country = manufacturer ? countryMap[manufacturer.Country] : null;
-                    const performance = stockperfMap[car.ID] || {};
-                    return { ...car, MakeName: manufacturer ? manufacturer.Name : 'Unknown', CountryCode: country ? country.Code : '??', PP: performance.PP || '', Colors: colorMap[car.ID] || [] };
-                });
-                
-                combinedCarData.sort((a, b) => a.MakeName.localeCompare(b.MakeName) || a.ShortName.localeCompare(b.ShortName));
-                populateCarTable(combinedCarData);
-                runPostLoadScripts();
-
-            } catch (error) {
-                console.error("Error loading or processing data:", error);
-                document.getElementById('car-table-body').innerHTML = `<tr><td colspan="20" style="text-align:center; color:red;">Error loading data. Check console.</td></tr>`;
-            }
-        }
-
-        function populateCarTable(carData) {
-            const tbody = document.getElementById('car-table-body');
-            tbody.innerHTML = ''; 
-            let currentMake = '';
-            carData.forEach((car, index) => {
-                if (car.MakeName !== currentMake) {
-                    currentMake = car.MakeName;
-                    tbody.innerHTML += `<tr><th class="car-make-header" colspan="20">${currentMake}</th></tr>`;
-                }
-                const tr = document.createElement('tr');
-                tr.id = car.ID;
-                let colorsHtml = car.Colors.length > 0
-                    ? car.Colors.map(color => {
-                        const safeColorName = color.replace(/[^a-zA-Z0-9]/g, '-');
-                        const checkboxId = `check-${car.ID}-${safeColorName}`;
-                        return `<div><input type="checkbox" id="${checkboxId}" class="color-checkbox"><label for="${checkboxId}">${color}</label></div>`;
-                    }).join('')
-                    : `<div>--</div>`;
-                tr.innerHTML = `<th>${index + 1}</th><td>${car.CountryCode}</td><td>${car.Year || ''}</td><td>${car.MakeName}</td><td>${car.ShortName}</td><td>${car.Layout || ''}</td><td>${car.Aspiration || ''}</td><td>${car.PP}</td><td class="price">${car.PriceNew || ''}</td><td class="price">${car.PriceLegend || ''}</td><td class="price">${car.PriceUsed || ''}</td><td>${car.Tags || ''}</td><td>${car.HowToObtain || ''}</td><td class="own-cell">${colorsHtml}</td><td>Tyr<br>BHA<br>ARB<br>DRC<br>DRE<br>NaFr<br>NCA<br>Toe<br>BrB</td><td></td><td>InT<br>AcS<br>BrS<br>ToD<br>DoF<br>ECU<br>Bal<br>Pos<br>PoR</td><td></td><td>1st<br>2nd<br>3rd<br>4th<br>5th<br>6th<br>7th<br>8th<br>Fnl</td><td></td>`;
-                tbody.appendChild(tr);
-            });
-        }
-        
-        async function runPostLoadScripts() {
-            addThousandSeparators();
-            await loadCheckboxState(); // Load from Supabase
-            addCheckboxListeners();    // Add listeners to save changes
-        }
-
-        function addThousandSeparators() {
-            document.querySelectorAll('.price').forEach(cell => {
-                let text = cell.textContent.trim();
-                if (text && !isNaN(text)) cell.textContent = parseFloat(text).toLocaleString();
-            });
-        }
-        
-        let lastSortedColumn = -1;
-        let lastSortAscending = true;
-
-        function sortTable(columnIndex) {
-            const table = document.getElementById("main-table");
-            const tbody = table.tBodies[0];
-            const rows = Array.from(tbody.querySelectorAll('tr[id]'));
-            const ascending = (lastSortedColumn === columnIndex) ? !lastSortAscending : true;
-            rows.sort((a, b) => {
-                const aVal = a.cells[columnIndex].textContent.trim().replace(/,/g, '');
-                const bVal = b.cells[columnIndex].textContent.trim().replace(/,/g, '');
-                const aIsNumber = !isNaN(parseFloat(aVal)) && isFinite(aVal);
-                const bIsNumber = !isNaN(parseFloat(bVal)) && isFinite(bVal);
-                if (aIsNumber && bIsNumber) return (ascending ? 1 : -1) * (parseFloat(aVal) - parseFloat(bVal));
-                return (ascending ? 1 : -1) * aVal.localeCompare(bVal, undefined, { numeric: true });
-            });
-            tbody.innerHTML = '';
-            let currentMake = '';
-            rows.forEach(row => {
-                const makeName = row.cells[3].textContent;
-                if (makeName !== currentMake) {
-                    currentMake = makeName;
-                    tbody.innerHTML += `<tr><th class="car-make-header" colspan="20">${currentMake}</th></tr>`;
-                }
-                tbody.appendChild(row);
-            });
-            lastSortedColumn = columnIndex;
-            lastSortAscending = ascending;
-            addCheckboxListeners();
-        }
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
