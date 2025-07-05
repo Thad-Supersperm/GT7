@@ -15,7 +15,15 @@ const carTableBody = carTable.querySelector('tbody');
 const loadingMessage = document.getElementById('loading-message');
 
 // --- 3. AUTHENTICATION LOGIC (No changes needed) ---
-loginButton.addEventListener('click', () => _supabase.auth.signInWithOAuth({ provider: 'github' }));
+// New, improved code
+loginButton.addEventListener('click', () => {
+    _supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+            redirectTo: window.location.origin + window.location.pathname
+        }
+    });
+});
 logoutButton.addEventListener('click', () => _supabase.auth.signOut());
 
 _supabase.auth.onAuthStateChange((_event, session) => {
