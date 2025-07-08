@@ -1,0 +1,45 @@
+name: Generate Data Manifest
+
+# This action will trigger on every push to the 'main' branch,
+# but ONLY if there are changes inside the 'data/used/' directory.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'data/used/**.csv'
+
+jobs:
+  build-manifest:
+    runs-on: ubuntu-latest # Use a standard Linux runner
+
+    steps:
+      # Step 1: Check out the repository's code so the script can access it
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up a Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x' # Use any recent version of Python 3
+
+      # Step 3: Run the Python script to generate the manifest.json file
+      - name: Run manifest generation script
+        run: python generate_manifest.py
+
+      # Step 4: Commit the newly generated manifest.json file back to the repo
+      # This action automatically handles configuring git, committing, and pushing.
+      - name: Commit and push manifest.json
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          # The message that will be used for the automated commit
+          commit_message: 'CI: Auto-generate data manifest'
+          
+          # The specific file to commit. This prevents other temporary files
+          # from being accidentally committed.
+          file_pattern: data/used/manifest.json
+          
+          # The user and email for the commit
+          commit_user_name: 'GitHub Actions Bot'
+          commit_user_email: 'github-actions[bot]@users.noreply.github.com'
