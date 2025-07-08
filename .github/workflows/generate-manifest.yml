@@ -1,0 +1,35 @@
+name: Generate Data Manifest
+
+on:
+  push:
+    branches:
+      - main
+    # Trigger if CSV files change in EITHER directory
+    paths:
+      - 'data/used/**.csv'
+      - 'data/legend/**.csv'
+
+jobs:
+  build-manifest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Run manifest generation script
+        run: python generate_manifest.py
+
+      - name: Commit and push manifest.json
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'CI: Auto-generate data manifest'
+          # Update the file pattern to the new location
+          file_pattern: data/manifest.json
+          commit_user_name: 'GitHub Actions Bot'
+          commit_user_email: 'github-actions[bot]@users.noreply.github.com'
