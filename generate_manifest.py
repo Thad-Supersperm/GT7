@@ -1,19 +1,39 @@
 import os
 import json
 
-used_data_path = 'data/used/'
-output_file = os.path.join(used_data_path, 'manifest.json')
+# Define paths
+used_path = 'data/used/'
+legend_path = 'data/legend/'
+output_file = 'data/manifest.json' # Moved to a central location
 
-# Find all .csv files in the directory
+manifest_data = {
+    "used": [],
+    "legend": []
+}
+
+# Process 'used' directory
 try:
-    filenames = [f for f in os.listdir(used_data_path) if f.endswith('.csv')]
-    # Sort them in reverse chronological order (newest first)
-    filenames.sort(reverse=True)
-
-    with open(output_file, 'w') as f:
-        json.dump(filenames, f)
-
-    print(f"Successfully created/updated manifest.json with {len(filenames)} files.")
-
+    used_files = [f for f in os.listdir(used_path) if f.endswith('.csv')]
+    used_files.sort(reverse=True)
+    manifest_data["used"] = used_files
+    print(f"Found {len(used_files)} files in {used_path}")
 except FileNotFoundError:
-    print(f"Error: Directory '{used_data_path}' not found.")
+    print(f"Warning: Directory '{used_path}' not found. Skipping.")
+
+# Process 'legend' directory
+try:
+    legend_files = [f for f in os.listdir(legend_path) if f.endswith('.csv')]
+    legend_files.sort(reverse=True)
+    manifest_data["legend"] = legend_files
+    print(f"Found {len(legend_files)} files in {legend_path}")
+except FileNotFoundError:
+    print(f"Warning: Directory '{legend_path}' not found. Skipping.")
+
+# Create the parent directory for the output file if it doesn't exist
+os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+# Write the combined manifest
+with open(output_file, 'w') as f:
+    json.dump(manifest_data, f)
+
+print(f"Successfully created/updated manifest at '{output_file}'")
