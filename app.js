@@ -1,11 +1,11 @@
-// --- 1. SUPABASE SETUP (Your details have been added) ---
+// --- 1. SUPABASE SETUP (No changes) ---
 const SUPABASE_URL = 'https://ayxfeividbydjtuohyjv.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5eGZlaXZpZGJ5ZGp0dW9oeWp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3MTA5MzYsImV4cCI6MjA2NzI4NjkzNn0.zeWkQfOqGXQVq8IzLgUzAMkWi9rvxeD9vvMt4U7Gzu0';
 
 const { createClient } = supabase;
 const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// --- 2. DOM ELEMENTS ---
+// --- 2. DOM ELEMENTS (No changes) ---
 const loginButton = document.getElementById('login-button');
 const logoutButton = document.getElementById('logout-button');
 const userInfo = document.getElementById('user-info');
@@ -14,8 +14,7 @@ const carTable = document.getElementById('car-table');
 const carTableBody = carTable.querySelector('tbody');
 const loadingMessage = document.getElementById('loading-message');
 
-// --- 3. AUTHENTICATION LOGIC (No changes needed) ---
-// New, improved code
+// --- 3. AUTHENTICATION LOGIC (Using the improved version) ---
 loginButton.addEventListener('click', () => {
     _supabase.auth.signInWithOAuth({
         provider: 'github',
@@ -47,42 +46,47 @@ function updateUI(session) {
     }
 }
 
-// --- 4. DATA LOADING AND JOINING ---
+// --- 4. DATA LOADING AND JOINING (Updated) ---
 
-// Helper to fetch and parse a CSV file, returns a Promise
 function parseCsv(url) {
     return new Promise(resolve => {
         Papa.parse(url, {
             download: true,
             header: true,
             skipEmptyLines: true,
-            // Normalizes headers to lowercase and no spaces (e.g., "ShortName" -> "shortname")
-            transformHeader: header => header.trim().toLowerCase(), 
-            complete: (results) => {
-                resolve(results.data);
-            }
+            transformHeader: header => header.trim().toLowerCase(),
+            complete: (results) => resolve(results.data)
         });
     });
 }
 
-// Main function to load all data, join it, and render the table
 async function loadAndProcessData(user) {
     loadingMessage.classList.remove('hidden');
     carTable.classList.add('hidden');
 
-    const [cars, makers, countries, perfs] = await Promise.all([
+    // Fetch all CSV files, including the new colors.csv from the root
+    const [cars, makers, countries, perfs, colorsData] = await Promise.all([
         parseCsv('data/db/cars.csv'),
         parseCsv('data/db/maker.csv'),
         parseCsv('data/db/country.csv'),
-        parseCsv('data/db/stockperf.csv')
+        parseCsv('data/db/stockperf.csv'),
+        parseCsv('colors.csv') // Load the new colors file
     ]);
 
-    // Create maps for efficient lookups (much faster than searching arrays)
+    // Create a map for colors, grouping them by car ID
+    const colorMap = new Map();
+    for (const item of colorsData) {
+        if (!colorMap.has(item.id)) {
+            colorMap.set(item.id, []);
+        }
+        colorMap.get(item.id).push(item.color);
+    }
+
     const makerMap = new Map(makers.map(m => [m.id, m]));
     const countryMap = new Map(countries.map(c => [c.id, c]));
     const perfMap = new Map(perfs.map(p => [p.id, p]));
 
-    // Join the data
+    // Join all the data
     const fullCarData = cars.map(car => {
         const maker = makerMap.get(car.maker);
         const country = maker ? countryMap.get(maker.country) : null;
@@ -94,7 +98,8 @@ async function loadAndProcessData(user) {
             makername: maker ? maker.name : 'N/A',
             countryname: country ? country.name : 'N/A',
             pp: perf ? perf.pp : 'N/A',
-            tyre: perf ? perf.tyre : 'N/A'
+            tyre: perf ? perf.tyre : 'N/A',
+            colors: colorMap.get(car.id) || [] // Get the array of colors for this car
         };
     });
 
@@ -103,43 +108,67 @@ async function loadAndProcessData(user) {
     carTable.classList.remove('hidden');
 }
 
-// --- 5. TABLE RENDERING ---
+// --- 5. TABLE RENDERING (Updated) ---
 function renderTable(carData, user) {
-    carTableBody.innerHTML = ''; // Clear previous data
+    carTableBody.innerHTML = '';
 
     for (const car of carData) {
         const row = carTableBody.insertRow();
         
-        // Column 1: "Own" Checkbox
+        // Col 1: "Own" Checkbox
         const checkboxCell = row.insertCell(0);
         checkboxCell.className = 'own-checkbox-cell';
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = `car-${car.id}`;
-        checkbox.dataset.identifier = car.id; // The unique car ID is our identifier
-        checkboxCell.appendChild(checkbox);
+        const ownCheckbox = document.createElement('input');
+        ownCheckbox.type = 'checkbox';
+        ownCheckbox.id = `car-${car.id}`;
+        ownCheckbox.dataset.identifier = car.id; // Identifier is just the car ID
+        checkboxCell.appendChild(ownCheckbox);
 
-        // Other columns
+        // Cols 2-4: Car Info
         row.insertCell(1).textContent = car.carname;
         row.insertCell(2).textContent = car.makername;
         row.insertCell(3).textContent = car.countryname;
 
-        // Column 5: Stock Performance (multi-line)
+        // Col 5: Performance
         const perfCell = row.insertCell(4);
-        perfCell.innerHTML = `
-            <span class="perf-item">PP: ${car.pp}</span>
-            <span class="perf-item">Tyres: ${car.tyre}</span>
-        `;
+        perfCell.innerHTML = `<span class="perf-item">PP: ${car.pp}</span><span class="perf-item">Tyres: ${car.tyre}</span>`;
+        
+        // Col 6: Available Colors (NEW)
+        const colorsCell = row.insertCell(5);
+        colorsCell.className = 'colors-cell';
+
+        if (car.colors.length > 0) {
+            car.colors.forEach(color => {
+                // Create a unique identifier for each car-color combination
+                const safeColor = color.replace(/\s+/g, '-'); // e.g., "Championship White" -> "Championship-White"
+                const identifier = `${car.id}-${safeColor}`;
+
+                const div = document.createElement('div');
+                div.className = 'color-item';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = identifier;
+                checkbox.dataset.identifier = identifier; // This unique ID is what we save to Supabase
+
+                const label = document.createElement('label');
+                label.htmlFor = identifier;
+                label.textContent = color;
+
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                colorsCell.appendChild(div);
+            });
+        }
     }
     
-    // After rendering the table structure, load the user's checklist
     loadUserChecklist(user);
 }
 
+// --- 6. SUPABASE DATA INTERACTION (No changes needed - it just works!) ---
 
-// --- 6. SUPABASE DATA INTERACTION ---
-
-// Fetches the user's saved selections and checks the boxes
+// This function now automatically handles BOTH "own" and "color" checkboxes
+// because they all have a unique `dataset.identifier`.
 async function loadUserChecklist(user) {
     const { data, error } = await _supabase
         .from('user_selections')
@@ -152,47 +181,45 @@ async function loadUserChecklist(user) {
     }
 
     data.forEach(item => {
-        // The identifier is just the car ID
-        const checkbox = document.getElementById(`car-${item.car_identifier}`);
+        const checkbox = document.getElementById(item.car_identifier);
         if (checkbox) {
             checkbox.checked = true;
         }
     });
 }
 
-// Event listener for all checkbox clicks in the table body
+// This event listener now automatically handles BOTH "own" and "color" checkboxes.
 carTableBody.addEventListener('change', async (event) => {
     if (event.target.type !== 'checkbox') return;
 
     const checkbox = event.target;
-    const carId = checkbox.dataset.identifier;
+    const identifier = checkbox.dataset.identifier;
     const { data: { user } } = await _supabase.auth.getUser();
 
     if (!user) {
         alert('You must be logged in to save your checklist.');
-        checkbox.checked = !checkbox.checked; // Revert the change
+        checkbox.checked = !checkbox.checked;
         return;
     }
 
     if (checkbox.checked) {
-        // Add record to Supabase
+        // Insert a row with the unique identifier (e.g., "1001" or "1001-Championship-White")
         const { error } = await _supabase
             .from('user_selections')
-            .insert({ user_id: user.id, car_identifier: carId });
-        if (error) console.error('Error saving selection:', error.message);
+            .insert({ user_id: user.id, car_identifier: identifier });
+        if (error) console.error('Error saving selection:', error);
     } else {
-        // Remove record from Supabase
+        // Delete the row with the matching unique identifier
         const { error } = await _supabase
             .from('user_selections')
             .delete()
-            .match({ user_id: user.id, car_identifier: carId });
-        if (error) console.error('Error removing selection:', error.message);
+            .match({ user_id: user.id, car_identifier: identifier });
+        if (error) console.error('Error removing selection:', error);
     }
 });
 
-// --- INITIALIZATION ---
+// --- INITIALIZATION (No changes) ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Check if a user session exists on page load
     _supabase.auth.getSession().then(({ data: { session } }) => {
         updateUI(session);
     });
