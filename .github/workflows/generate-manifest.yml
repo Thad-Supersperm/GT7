@@ -1,4 +1,4 @@
-name: Generate Data Manifest-
+name: Generate Data Manifest
 
 on:
   push:
