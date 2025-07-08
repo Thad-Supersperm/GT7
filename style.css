@@ -90,3 +90,19 @@ h1 {
 .hidden {
     display: none;
 }
+
+.colors-cell {
+    vertical-align: top;
+    min-width: 180px; /* Give the colors some space */
+}
+
+.color-item {
+    display: block;
+    margin-bottom: 5px;
+    white-space: nowrap; /* Prevent color names from wrapping */
+}
+
+.color-item label {
+    margin-left: 8px;
+    cursor: pointer;
+}
