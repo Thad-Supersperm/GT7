@@ -17,9 +17,17 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      # This is the new debugging step.
+      - name: List files in the workspace
+        run: ls -la
+
       - name: Run Zsh build script and save output
+        # This is the crucial change: we specify the shell to be zsh
+        shell: zsh {0}
         run: |
+          # The 'chmod' is still good practice
           chmod +x build_price_data.zsh
+          # Now this will be executed by zsh
           ./build_price_data.zsh > data/prebuilt_prices.json
 
       - name: Commit and push pre-built data
