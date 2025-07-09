@@ -1,38 +1,54 @@
+# Workflow name
 name: Build Pre-processed Data
 
-# This block enables both push-based and manual triggers
+# This block defines when the workflow will run
 on:
-  # Trigger 1: Automatically on push to data directories
+  # Trigger 1: Automatically on push when data files change
   push:
     branches:
       - main
     paths:
+      # Watch for any CSV changes in the 'used' or 'legend' directories
       - 'data/used/**.csv'
       - 'data/legend/**.csv'
 
-  # Trigger 2: Manually from the Actions tab
+  # Trigger 2: Manually from the Actions tab on GitHub
   workflow_dispatch:
 
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  # This workflow contains a single job called "build-data-file"
   build-data-file:
+    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
-steps:
-  - name: Check out repository
-    uses: actions/checkout@v4
+    # A sequence of tasks that will be executed as part of the job
+    steps:
+      # Step 1: Check out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-  - name: Run Zsh build script and save output
-    # No 'working-directory' needed anymore!
-    run: |
-      chmod +x build_price_data.zsh
-      ./build_price_data.zsh > data/prebuilt_prices.json
+      # Step 2: Run the Zsh script to generate the prebuilt_prices.json file
+      # Since we are now in the project root, no 'working-directory' is needed.
+      - name: Run Zsh build script and save output
+        run: |
+          # Make the script executable
+          chmod +x build_price_data.zsh
+          # Run the script and redirect its output to the final JSON file
+          ./build_price_data.zsh > data/prebuilt_prices.json
 
-  - name: Commit and push pre-built data
-    uses: stefanzweifel/git-auto-commit-action@v5
-    with:
-      commit_message: 'CI: Auto-build pre-processed price data'
-      # Path is simple again
-      file_pattern: data/prebuilt_prices.json
-
-      commit_user_name: 'GitHub Actions Bot'
-      commit_user_email: 'github-actions[bot]@users.noreply.github.com'
+      # Step 3: Commit the newly generated data file back to the repository
+      # This action handles all the git commands for you.
+      - name: Commit and push pre-built data
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          # The message that will be used for the automated commit
+          commit_message: 'CI: Auto-build pre-processed price data'
+          
+          # The specific file to commit. This prevents other temporary files
+          # from being accidentally committed. The path is now simple.
+          file_pattern: data/prebuilt_prices.json
+          
+          # The user and email for the bot's commit
+          commit_user_name: 'GitHub Actions Bot'
+          commit_user_email: 'github-actions[bot]@users.noreply.github.com'
