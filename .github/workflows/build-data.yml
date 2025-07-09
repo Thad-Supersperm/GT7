@@ -42,8 +42,10 @@ jobs:
           # What to do if no files are found
           if-no-files-found: error
 
-      # We will temporarily disable the auto-commit to isolate the generation step
-      # - name: Commit and push pre-built data
-      #   uses: stefanzweifel/git-auto-commit-action@v5
-      #   with:
-      #     # ...
+      - name: Commit and push pre-built data
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'CI: Auto-build pre-processed price data'
+          file_pattern: data/prebuilt_prices.json
+          commit_user_name: 'GitHub Actions Bot'
+          commit_user_email: 'github-actions[bot]@users.noreply.github.com'
