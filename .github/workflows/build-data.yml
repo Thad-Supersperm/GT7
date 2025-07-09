@@ -34,5 +34,5 @@ steps:
       # Path is simple again
       file_pattern: data/prebuilt_prices.json
 
-          commit_user_name: 'GitHub Actions Bot'
-          commit_user_email: 'github-actions[bot]@users.noreply.github.com'
+      commit_user_name: 'GitHub Actions Bot'
+      commit_user_email: 'github-actions[bot]@users.noreply.github.com'
