@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'data/used/**.csv'
-      - 'data-legend/**.csv' # Note: Make sure this path is correct in your repo
+      - 'data/legend/**.csv'
   workflow_dispatch:
 
 jobs:
@@ -24,19 +24,26 @@ jobs:
         shell: zsh {0}
         run: |
           chmod +x build_price_data.zsh
+          # Create the data directory if it doesn't exist, just in case
+          mkdir -p data
           ./build_price_data.zsh > data/prebuilt_prices.json
       
-      # --- NEW DEBUGGING STEP ---
-      - name: Display contents of prebuilt_prices.json
-        run: |
-          echo "--- Start of prebuilt_prices.json ---"
-          cat data/prebuilt_prices.json
-          echo "--- End of prebuilt_prices.json ---"
-
-      - name: Commit and push pre-built data
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Display contents of prebuilt_prices.json for logging
+        run: cat data/prebuilt_prices.json || echo "File is empty or does not exist."
+      
+      # --- THIS IS THE MOST IMPORTANT NEW STEP ---
+      - name: Upload prebuilt_prices.json as an artifact
+        uses: actions/upload-artifact@v4
         with:
-          commit_message: 'CI: Auto-build pre-processed price data'
-          file_pattern: data/prebuilt_prices.json
-          commit_user_name: 'GitHub Actions Bot'
-          commit_user_email: 'github-actions[bot]@users.noreply.github.com'
+          # The name of the artifact bundle
+          name: prebuilt-data-artifact
+          # The path to the file you want to upload
+          path: data/prebuilt_prices.json
+          # What to do if no files are found
+          if-no-files-found: error
+
+      # We will temporarily disable the auto-commit to isolate the generation step
+      # - name: Commit and push pre-built data
+      #   uses: stefanzweifel/git-auto-commit-action@v5
+      #   with:
+      #     # ...
