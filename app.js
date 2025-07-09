@@ -17,7 +17,9 @@ function updateUI(session) { if (session) { loginButton.classList.add('hidden');
 function parseCsv(url) { return new Promise((resolve, reject) => { Papa.parse(url, { download: true, header: true, skipEmptyLines: true, transformHeader: h => h.trim().toLowerCase(), complete: (res) => resolve(res.data), error: (err) => reject(err) }); }); }
 async function loadAndProcessData(user) {
     loadingMessage.classList.remove('hidden'); carTable.classList.add('hidden');
+    console.log("Fetching prebuilt_prices.json...");
     const [ priceMap, cars, makers, countries, perfs, colorsData ] = await Promise.all([ fetch('data/prebuilt_prices.json').then(res => res.json()), parseCsv('data/db/cars.csv'), parseCsv('data/db/maker.csv'), parseCsv('data/db/country.csv'), parseCsv('data/db/stockperf.csv'), parseCsv('colors.csv') ]);
+    console.log("All data loaded successfully.");
     const colorMap = new Map(); colorsData.forEach(item => { if (!colorMap.has(item.id)) colorMap.set(item.id, []); colorMap.get(item.id).push(item.color); });
     const makerMap = new Map(makers.map(m => [m.id, m])); const countryMap = new Map(countries.map(c => [c.id, c])); const perfMap = new Map(perfs.map(p => [p.id, p]));
     const fullCarData = cars.map(car => { const maker = makerMap.get(car.maker); const country = maker ? countryMap.get(maker.country) : null; const perf = perfMap.get(car.id); return { id: car.id, carname: car.shortname, makername: maker ? maker.name : 'N/A', countryname: country ? country.name : 'N/A', pp: perf ? perf.pp : 'N/A', tyre: perf ? perf.tyre : 'N/A', colors: colorMap.get(car.id) || [] }; });
@@ -27,13 +29,25 @@ async function loadAndProcessData(user) {
 
 // --- 5. TABLE RENDERING ---
 function generateCalendarHeaders(priceMap) {
-    // THE FIX IS HERE: We treat the key as a simple string, remove the quotes, and then process it.
+    console.log("Generating calendar headers from priceMap with", Object.keys(priceMap).length, "entries.");
+
+    // THE FIX: Use a robust, numeric-based date parser
     const allDates = Object.keys(priceMap).map(key => {
-        const unquotedKey = key.slice(1, -1); // Remove the first and last quote characters
-        const datePart = unquotedKey.split(',')[1];
-        return new Date(datePart.replace(/(\d{2})-(\d{2})-(\d{2})/, '20$1-$2-$3'));
+        const unquotedKey = key.slice(1, -1); // "1001,22-03-04,used" -> 1001,22-03-04,used
+        const datePart = unquotedKey.split(',')[1]; // -> 22-03-04
+        const [year, month, day] = datePart.split('-').map(Number); // -> [22, 3, 4]
+        // Use Date.UTC for timezone-safe date creation. Month is 0-indexed.
+        return new Date(Date.UTC(2000 + year, month - 1, day));
     });
-    if (allDates.length === 0) { const row = document.createElement('tr'); const cell = row.insertCell(); cell.textContent = "No price data available."; return { monthHeaderRow: row, dayHeaderRow: document.createElement('tr'), calendarDates: [] }; }
+    
+    // DEBUGGING: See what the date parsing produces
+    console.log("Parsed Date Objects:", allDates);
+
+    if (allDates.length === 0 || allDates.some(d => isNaN(d))) {
+        console.error("Failed to parse dates or no dates found. Aborting header generation.");
+        const row = document.createElement('tr'); const cell = row.insertCell(); cell.colSpan = 7; cell.textContent = "Error: No price data available to build timeline."; return { monthHeaderRow: row, dayHeaderRow: document.createElement('tr'), calendarDates: [] };
+    }
+
     const newestDate = new Date(Math.max.apply(null, allDates)); const oldestDate = new Date(Math.min.apply(null, allDates));
     const monthHeaderRow = document.createElement('tr'); const dayHeaderRow = document.createElement('tr'); const calendarDates = [];
     for (let i = 0; i < 6; i++) { monthHeaderRow.appendChild(document.createElement('th')); dayHeaderRow.appendChild(document.createElement('th')); }
@@ -47,11 +61,15 @@ function generateCalendarHeaders(priceMap) {
         currentDate.setUTCDate(currentDate.getUTCDate() - 1);
     }
     if (monthColspan > 0) { const th = document.createElement('th'); th.className = 'price-header-month'; th.colSpan = monthColspan; th.innerHTML = `<b>20${currentMonthStr.replace('-', '/')}</b>`; monthHeaderRow.appendChild(th); }
+    
+    // DEBUGGING: See the final calendar array
+    console.log("Generated calendarDates array:", calendarDates);
     return { monthHeaderRow, dayHeaderRow, calendarDates };
 }
 function renderTable(carData, priceMap, user) {
     const tableHeader = carTable.querySelector('thead'); tableHeader.innerHTML = ''; carTableBody.innerHTML = '';
     const { monthHeaderRow, dayHeaderRow, calendarDates } = generateCalendarHeaders(priceMap);
+    if (calendarDates.length === 0) { tableHeader.appendChild(monthHeaderRow); return; } // Stop if no dates
     const staticHeaderRow = document.createElement('tr'); staticHeaderRow.innerHTML = `<th class="own-header">Own</th><th>Car Name</th><th>Maker</th><th>Country</th><th>Stock Performance</th><th>Available Colors</th>`;
     calendarDates.forEach(() => staticHeaderRow.appendChild(document.createElement('th')));
     tableHeader.appendChild(staticHeaderRow); tableHeader.appendChild(monthHeaderRow); tableHeader.appendChild(dayHeaderRow);
