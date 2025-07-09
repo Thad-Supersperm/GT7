@@ -46,7 +46,7 @@ function updateUI(session) {
     }
 }
 
-// --- 4. DATA LOADING AND JOINING ---
+// --- 4. DATA LOADING (Simplified for Pre-built Data) ---
 
 function parseCsv(url) {
     return new Promise((resolve, reject) => {
@@ -61,65 +61,20 @@ function parseCsv(url) {
     });
 }
 
-// Updated helper to fetch and process all price data from both sources
-async function loadAllPriceData(manifest) {
-    // This map will store both prices: Map<CarID, Map<DateString, {usedPrice: string, legendPrice: string}>>
-    const priceMap = new Map();
-
-    const processEntries = (dayData, dateStr, priceType) => {
-        // Handle different column names: 'price' for used, 'cr' for legend
-        const priceKey = priceType === 'used' ? 'price' : 'cr';
-        const mapKey = priceType === 'used' ? 'usedPrice' : 'legendPrice';
-
-        for (const entry of dayData) {
-            if (!priceMap.has(entry.id)) {
-                priceMap.set(entry.id, new Map());
-            }
-            if (!priceMap.get(entry.id).has(dateStr)) {
-                priceMap.get(entry.id).set(dateStr, {}); // Initialize price object for the day
-            }
-            // Set the appropriate price type
-            priceMap.get(entry.id).get(dateStr)[mapKey] = entry[priceKey];
-        }
-    };
-
-    const usedPromises = (manifest.used || []).map(file => {
-        const dateStr = file.replace('.csv', '');
-        return parseCsv(`data/used/${file}`).then(dayData => processEntries(dayData, dateStr, 'used'));
-    });
-
-    const legendPromises = (manifest.legend || []).map(file => {
-        const dateStr = file.replace('.csv', '');
-        return parseCsv(`data/legend/${file}`).then(dayData => processEntries(dayData, dateStr, 'legend'));
-    });
-
-    await Promise.all([...usedPromises, ...legendPromises]);
-    return priceMap;
-}
-
 async function loadAndProcessData(user) {
     loadingMessage.classList.remove('hidden');
     carTable.classList.add('hidden');
 
-    // Step 1: Fetch the new, structured manifest
-    const manifestResponse = await fetch('data/manifest.json');
-    const manifest = await manifestResponse.json();
-    
-    // Combine date lists and get unique, sorted dates. Newest first.
-    const allDateFiles = [...new Set([...(manifest.used || []), ...(manifest.legend || [])])];
-    allDateFiles.sort().reverse();
-    const orderedDates = allDateFiles.map(p => p.replace('.csv', ''));
-
-    // Step 2: Load ALL data in parallel
+    // Load ALL data in parallel. Notice we now fetch ONE price file.
     const [
-        priceMap,
+        priceData, // The pre-built JSON file
         cars,
         makers,
         countries,
         perfs,
         colorsData
     ] = await Promise.all([
-        loadAllPriceData(manifest),
+        fetch('data/prebuilt_prices.json').then(res => res.json()),
         parseCsv('data/db/cars.csv'),
         parseCsv('data/db/maker.csv'),
         parseCsv('data/db/country.csv'),
@@ -127,7 +82,7 @@ async function loadAndProcessData(user) {
         parseCsv('colors.csv')
     ]);
 
-    // Step 3: Process and join static car data
+    // Process and join static car data
     const colorMap = new Map();
     colorsData.forEach(item => {
         if (!colorMap.has(item.id)) colorMap.set(item.id, []);
@@ -152,72 +107,28 @@ async function loadAndProcessData(user) {
         };
     });
 
-    // Step 4: Render the table with all the data
-    renderTable(fullCarData, priceMap, orderedDates, user);
+    renderTable(fullCarData, priceData, user);
     loadingMessage.classList.add('hidden');
     carTable.classList.remove('hidden');
 }
 
 
-// --- 5. TABLE RENDERING ---
+// --- 5. TABLE RENDERING (Simplified for Pre-built Data) ---
 
-function generatePriceHeaders(orderedDates) {
-    const monthHeaderRow = document.createElement('tr');
-    const dayHeaderRow = document.createElement('tr');
-
-    // Add empty cells to align with static columns
-    for (let i = 0; i < 6; i++) {
-        monthHeaderRow.appendChild(document.createElement('th'));
-        dayHeaderRow.appendChild(document.createElement('th'));
-    }
-    
-    if (orderedDates.length === 0) return { monthHeaderRow, dayHeaderRow };
-
-    // Note: The date format "YY-MM-DD" is assumed.
-    let currentMonth = orderedDates[0].substring(0, 5);
-    let monthColspan = 0;
-
-    for (const dateStr of orderedDates) {
-        const [year, month, day] = dateStr.split('-');
-        const monthIdentifier = `${year}-${month}`;
-
-        if (monthIdentifier !== currentMonth) {
-            const th = document.createElement('th');
-            th.className = 'price-header-month';
-            th.colSpan = monthColspan;
-            th.innerHTML = `<b>20${currentMonth.replace('-', '/')}</b>`;
-            monthHeaderRow.appendChild(th);
-
-            currentMonth = monthIdentifier;
-            monthColspan = 0;
-        }
-        monthColspan++;
-
-        const dayTh = document.createElement('th');
-        dayTh.className = 'price-header-day';
-        dayTh.textContent = day;
-        dayHeaderRow.appendChild(dayTh);
-    }
-    
-    // Append the last month group
-    const th = document.createElement('th');
-    th.className = 'price-header-month';
-    th.colSpan = monthColspan;
-    th.innerHTML = `<b>20${currentMonth.replace('-', '/')}</b>`;
-    monthHeaderRow.appendChild(th);
-
-    return { monthHeaderRow, dayHeaderRow };
-}
-
-function renderTable(carData, priceMap, orderedDates, user) {
+function renderTable(carData, priceData, user) {
     const tableHeader = carTable.querySelector('thead');
-    tableHeader.innerHTML = '';
+    tableHeader.innerHTML = `
+        <tr>
+            <th class="own-header">Own</th>
+            <th>Car Name</th>
+            <th>Maker</th>
+            <th>Country</th>
+            <th>Stock Performance</th>
+            <th>Available Colors</th>
+            <th class="price-header-month">Price History (Newest to Oldest)</th>
+        </tr>
+    `;
     carTableBody.innerHTML = '';
-
-    // Generate and append dynamic price headers
-    const { monthHeaderRow, dayHeaderRow } = generatePriceHeaders(orderedDates);
-    tableHeader.appendChild(monthHeaderRow);
-    tableHeader.appendChild(dayHeaderRow);
 
     // Render each car row
     for (const car of carData) {
@@ -254,46 +165,30 @@ function renderTable(carData, priceMap, orderedDates, user) {
             });
         }
         
-        // --- Dynamic Price Cells with Merging ---
+        // --- NEW: Render price cells from pre-built data ---
+        const carPriceTimeline = priceData[car.id] || [];
         let priceCellsHtml = '';
-        if (orderedDates.length > 0) {
-            let lastUsedPrice = 'initial';
-            let lastLegendPrice = 'initial';
-            let colspan = 0;
-
-            const appendCell = () => {
-                let cellContent = '';
-                if (lastUsedPrice) {
-                    cellContent += `<div class='price-used'>U: ${parseInt(lastUsedPrice).toLocaleString()}</div>`;
-                }
-                if (lastLegendPrice) {
-                    cellContent += `<div class='price-legend'>L: ${parseInt(lastLegendPrice).toLocaleString()}</div>`;
-                }
-                priceCellsHtml += `<td class="price-cell" colspan="${colspan}">${cellContent}</td>`;
-            };
-
-            for (const dateStr of orderedDates) {
-                const prices = priceMap.get(car.id)?.get(dateStr) || {};
-                const currentUsed = prices.usedPrice || null;
-                const currentLegend = prices.legendPrice || null;
-
-                if (currentUsed === lastUsedPrice && currentLegend === lastLegendPrice) {
-                    colspan++;
-                } else {
-                    if (colspan > 0) {
-                        appendCell();
-                    }
-                    lastUsedPrice = currentUsed;
-                    lastLegendPrice = currentLegend;
-                    colspan = 1;
+        
+        for (const cell of carPriceTimeline) {
+            let cellContent = '';
+            // Safely parse integers and format them
+            if (cell.used) {
+                const usedPrice = parseInt(cell.used, 10);
+                if (!isNaN(usedPrice)) {
+                    cellContent += `<div class='price-used'>U: ${usedPrice.toLocaleString()}</div>`;
                 }
             }
-            // Append the last group of cells
-            if (colspan > 0) {
-                appendCell();
+            if (cell.legend) {
+                const legendPrice = parseInt(cell.legend, 10);
+                if (!isNaN(legendPrice)) {
+                    cellContent += `<div class='price-legend'>L: ${legendPrice.toLocaleString()}</div>`;
+                }
             }
+            priceCellsHtml += `<td class="price-cell" colspan="${cell.colspan}">${cellContent}</td>`;
         }
-        row.innerHTML += priceCellsHtml;
+        
+        // Append all price cells at once to the end of the row
+        row.insertAdjacentHTML('beforeend', priceCellsHtml);
     }
 
     loadUserChecklist(user);
