@@ -4,12 +4,11 @@ typeset -A prices
 
 # --- Data Ingestion (Safe version) ---
 file_list=()
-[[ -d data/used ]] && file_list+=(data/used/*.csv)
-[[ -d data/legend ]] && file_list+=(data/legend/*.csv)
+# Use (N) glob qualifier to prevent errors if directories are empty
+[[ -d data/used ]] && file_list+=(data/used/*.csv(N))
+[[ -d data/legend ]] && file_list+=(data/legend/*.csv(N))
 
 for file in $file_list; do
-  [[ ! -f "$file" ]] && continue
-  
   type=$(echo "$file" | cut -d'/' -f2)
   date_key=$(basename "$file" .csv)
   
@@ -20,16 +19,23 @@ for file in $file_list; do
   done
 done
 
-# --- JSON Output Generation (NEW ROBUST LOGIC) ---
-# This new logic prevents trailing commas.
-output_lines=()
-for key in ${(k)prices}; do
-  # Create each "key": "value" line
-  output_lines+=( "  \"$key\": \"${prices[$key]}\"" )
+# --- JSON Output Generation (FOOLPROOF LOOP) ---
+echo "{"
+
+# Get all the keys into an array
+keys=("${(@k)prices}")
+num_keys=${#keys}
+
+# Loop through all keys except the last one, printing a comma
+for ((i = 1; i < num_keys; i++)); do
+  key=${keys[i]}
+  echo "  \"$key\": \"${prices[$key]}\","
 done
 
-# Join all the lines with a comma and a newline
-joined_output=$(IFS=$',\n'; echo "${output_lines[*]}")
+# Print the very last key-value pair WITHOUT a comma
+if (( num_keys > 0 )); then
+  key=${keys[num_keys]}
+  echo "  \"$key\": \"${prices[$key]}\""
+fi
 
-# Print the final, valid JSON object
-echo "{\n$joined_output\n}"
+echo "}"
