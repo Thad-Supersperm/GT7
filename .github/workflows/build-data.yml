@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'data/used/**.csv'
-      - 'data/legend/**.csv'
+      - 'data-legend/**.csv' # Note: Make sure this path is correct in your repo
   workflow_dispatch:
 
 jobs:
@@ -17,20 +17,21 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # THIS IS THE NEW, CRUCIAL STEP
       - name: Install Zsh
         run: sudo apt-get update && sudo apt-get install -y zsh
 
-      # No longer need the 'ls' debugging step
-      # - name: List files in the workspace
-      #   run: ls -la
-
-      - name: Run Zsh build script and save output
-        # Now that Zsh is installed, this will work perfectly
+      - name: Run Zsh build script
         shell: zsh {0}
         run: |
           chmod +x build_price_data.zsh
           ./build_price_data.zsh > data/prebuilt_prices.json
+      
+      # --- NEW DEBUGGING STEP ---
+      - name: Display contents of prebuilt_prices.json
+        run: |
+          echo "--- Start of prebuilt_prices.json ---"
+          cat data/prebuilt_prices.json
+          echo "--- End of prebuilt_prices.json ---"
 
       - name: Commit and push pre-built data
         uses: stefanzweifel/git-auto-commit-action@v5
