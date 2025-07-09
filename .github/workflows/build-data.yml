@@ -22,14 +22,18 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Zsh build script and save output
+        # Add this 'working-directory' line
+        working-directory: ./GT7 
         run: |
           chmod +x build_price_data.zsh
+          # The path to the output file must now be relative to the GT7 folder
           ./build_price_data.zsh > data/prebuilt_prices.json
 
       - name: Commit and push pre-built data
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'CI: Auto-build pre-processed price data'
-          file_pattern: data/prebuilt_prices.json
+          # The file pattern must now include the sub-folder
+          file_pattern: GT7/data/prebuilt_prices.json
           commit_user_name: 'GitHub Actions Bot'
           commit_user_email: 'github-actions[bot]@users.noreply.github.com'
