@@ -27,7 +27,9 @@ async function loadAndProcessData(user) {
 
 // --- 5. TABLE RENDERING ---
 function generateCalendarHeaders(priceMap) {
+    // THE FIX IS HERE: Ensure date string is YYYY-MM-DD before creating a Date object.
     const allDates = Object.keys(priceMap).map(key => new Date(key.split(',')[1].replace(/(\d{2})-(\d{2})-(\d{2})/, '20$1-$2-$3')));
+
     if (allDates.length === 0) return { monthHeaderRow: document.createElement('tr'), dayHeaderRow: document.createElement('tr'), calendarDates: [] };
     const newestDate = new Date(Math.max.apply(null, allDates)); const oldestDate = new Date(Math.min.apply(null, allDates));
     const monthHeaderRow = document.createElement('tr'); const dayHeaderRow = document.createElement('tr'); const calendarDates = [];
