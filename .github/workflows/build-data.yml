@@ -1,0 +1,33 @@
+name: Build Pre-processed Data
+
+on:
+  push:
+    branches:
+      - main
+    # Trigger if CSV files change in EITHER directory
+    paths:
+      - 'data/used/**.csv'
+      - 'data/legend/**.csv'
+
+jobs:
+  build-data-file:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # The ubuntu-latest runner has zsh pre-installed
+      - name: Run Zsh build script and save output
+        run: |
+          chmod +x build_price_data.zsh
+          ./build_price_data.zsh > data/prebuilt_prices.json
+
+      - name: Commit and push pre-built data
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'CI: Auto-build pre-processed price data'
+          # We are now committing a different file
+          file_pattern: data/prebuilt_prices.json
+          commit_user_name: 'GitHub Actions Bot'
+          commit_user_email: 'github-actions[bot]@users.noreply.github.com'
