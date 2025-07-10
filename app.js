@@ -17,9 +17,7 @@ function updateUI(session) { if (session) { loginButton.classList.add('hidden');
 function parseCsv(url) { return new Promise((resolve, reject) => { Papa.parse(url, { download: true, header: true, skipEmptyLines: true, transformHeader: h => h.trim().toLowerCase(), complete: (res) => resolve(res.data), error: (err) => reject(err) }); }); }
 async function loadAndProcessData(user) {
     loadingMessage.classList.remove('hidden'); carTable.classList.add('hidden');
-    console.log("Fetching prebuilt_prices.json...");
     const [ priceMap, cars, makers, countries, perfs, colorsData ] = await Promise.all([ fetch('data/prebuilt_prices.json').then(res => res.json()), parseCsv('data/db/cars.csv'), parseCsv('data/db/maker.csv'), parseCsv('data/db/country.csv'), parseCsv('data/db/stockperf.csv'), parseCsv('colors.csv') ]);
-    console.log("All data loaded. Price map object:", priceMap); // DEBUG: Show the loaded price map
     const colorMap = new Map(); colorsData.forEach(item => { if (!colorMap.has(item.id)) colorMap.set(item.id, []); colorMap.get(item.id).push(item.color); });
     const makerMap = new Map(makers.map(m => [m.id, m])); const countryMap = new Map(countries.map(c => [c.id, c])); const perfMap = new Map(perfs.map(p => [p.id, p]));
     const fullCarData = cars.map(car => { const maker = makerMap.get(car.maker); const country = maker ? countryMap.get(maker.country) : null; const perf = perfMap.get(car.id); return { id: car.id, carname: car.shortname, makername: maker ? maker.name : 'N/A', countryname: country ? country.name : 'N/A', pp: perf ? perf.pp : 'N/A', tyre: perf ? perf.tyre : 'N/A', colors: colorMap.get(car.id) || [] }; });
@@ -29,23 +27,12 @@ async function loadAndProcessData(user) {
 
 // --- 5. TABLE RENDERING ---
 function generateCalendarHeaders(priceMap) {
-    console.log("Generating calendar headers...");
     const allDates = Object.keys(priceMap).map(key => {
-        try {
-            const unquotedKey = key.slice(1, -1);
-            const datePart = unquotedKey.split(',')[1];
-            const [year, month, day] = datePart.split('-').map(Number);
-            return new Date(Date.UTC(2000 + year, month - 1, day));
-        } catch (e) {
-            console.error(`Failed to parse key: ${key}`, e);
-            return null; // Return null on failure
-        }
-    }).filter(d => d && !isNaN(d)); // Filter out any nulls or invalid dates
-
-    console.log(`Parsed ${allDates.length} valid dates.`); // DEBUG: Show how many dates were valid
-
+        const datePart = key.split(',')[1];
+        const [year, month, day] = datePart.split('-').map(Number);
+        return new Date(Date.UTC(2000 + year, month - 1, day));
+    }).filter(d => !isNaN(d));
     if (allDates.length === 0) { const row = document.createElement('tr'); const cell = row.insertCell(); cell.colSpan = 7; cell.textContent = "Error: No price data available to build timeline."; return { monthHeaderRow: row, dayHeaderRow: document.createElement('tr'), calendarDates: [] }; }
-    
     const newestDate = new Date(Math.max.apply(null, allDates)); const oldestDate = new Date(Math.min.apply(null, allDates));
     const monthHeaderRow = document.createElement('tr'); const dayHeaderRow = document.createElement('tr'); const calendarDates = [];
     for (let i = 0; i < 6; i++) { monthHeaderRow.appendChild(document.createElement('th')); dayHeaderRow.appendChild(document.createElement('th')); }
@@ -59,7 +46,6 @@ function generateCalendarHeaders(priceMap) {
         currentDate.setUTCDate(currentDate.getUTCDate() - 1);
     }
     if (monthColspan > 0) { const th = document.createElement('th'); th.className = 'price-header-month'; th.colSpan = monthColspan; th.innerHTML = `<b>20${currentMonthStr.replace('-', '/')}</b>`; monthHeaderRow.appendChild(th); }
-    console.log(`Generated ${calendarDates.length} calendar days.`); // DEBUG: Show final calendar length
     return { monthHeaderRow, dayHeaderRow, calendarDates };
 }
 function renderTable(carData, priceMap, user) {
@@ -77,7 +63,14 @@ function renderTable(carData, priceMap, user) {
         const colorsCell = row.insertCell(); colorsCell.className = 'colors-cell'; if (car.colors.length > 0) { car.colors.forEach(color => { const safeColor = color.replace(/\s+/g, '-'); const identifier = `${car.id}-${safeColor}`; const div = document.createElement('div'); div.className = 'color-item'; div.innerHTML = `<input type="checkbox" id="${identifier}" data-identifier="${identifier}"><label for="${identifier}">${color}</label>`; colorsCell.appendChild(div); }); }
         let lastUsedPrice = 'initial'; let lastLegendPrice = 'initial'; let colspan = 0;
         const appendCell = () => { if (colspan === 0) return; const cell = row.insertCell(); cell.className = 'price-cell'; cell.colSpan = colspan; let cellContent = ''; if (lastUsedPrice) { const usedPrice = parseInt(lastUsedPrice, 10); if (!isNaN(usedPrice)) cellContent += `<div class='price-used'>U: ${usedPrice.toLocaleString()}</div>`; } if (lastLegendPrice) { const legendPrice = parseInt(lastLegendPrice, 10); if (!isNaN(legendPrice)) cellContent += `<div class='price-legend'>L: ${legendPrice.toLocaleString()}</div>`; } cell.innerHTML = cellContent; };
-        for (const dateStr of calendarDates) { const usedKey = `"${car.id},${dateStr},used"`; const legendKey = `"${car.id},${dateStr},legend"`; const currentUsed = priceMap[usedKey] || null; const currentLegend = priceMap[legendKey] || null; if (currentUsed === lastUsedPrice && currentLegend === lastLegendPrice) { colspan++; } else { appendCell(); lastUsedPrice = currentUsed; lastLegendPrice = currentLegend; colspan = 1; } }
+        for (const dateStr of calendarDates) {
+            // THE FIX IS HERE: We now build simple keys without extra quotes
+            const usedKey = `${car.id},${dateStr},used`;
+            const legendKey = `${car.id},${dateStr},legend`;
+            const currentUsed = priceMap[usedKey] || null;
+            const currentLegend = priceMap[legendKey] || null;
+            if (currentUsed === lastUsedPrice && currentLegend === lastLegendPrice) { colspan++; } else { appendCell(); lastUsedPrice = currentUsed; lastLegendPrice = currentLegend; colspan = 1; }
+        }
         appendCell();
     }
     loadUserChecklist(user);
@@ -88,4 +81,4 @@ async function loadUserChecklist(user) { const { data, error } = await _supabase
 carTableBody.addEventListener('change', async (event) => { if (event.target.type !== 'checkbox') return; const checkbox = event.target; const identifier = checkbox.dataset.identifier; const { data: { user } } = await _supabase.auth.getUser(); if (!user) { alert('You must be logged in to save your checklist.'); checkbox.checked = !checkbox.checked; return; } if (checkbox.checked) { const { error } = await _supabase.from('user_selections').insert({ user_id: user.id, car_identifier: identifier }); if (error) console.error('Error saving selection:', error); } else { const { error } = await _supabase.from('user_selections').delete().match({ user_id: user.id, car_identifier: identifier }); if (error) console.error('Error removing selection:', error); } });
 
 // --- 7. INITIALIZATION ---
-document.addEventListener('DOMContentLoaded', () => { _supabase.auth.getSession().then(({ data: { session } }) => { updateUI(session); }); });
+document.addEventListener('DOMContentLoaded', () => { _supabase.getSession().then(({ data: { session } }) => { updateUI(session); }); });
