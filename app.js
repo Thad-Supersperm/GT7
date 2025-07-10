@@ -34,15 +34,16 @@ function generateCalendarHeaders(priceMap) {
     }).filter(d => !isNaN(d));
     if (allDates.length === 0) { const row = document.createElement('tr'); const cell = row.insertCell(); cell.colSpan = 7; cell.textContent = "Error: No price data available to build timeline."; return { yearHeaderRow: row, monthHeaderRow: document.createElement('tr'), dayHeaderRow: document.createElement('tr'), calendarDates: [] }; }
 
-    const newestDate = new Date(Math.max.apply(null, allDates)); const oldestDate = new Date(Math.min.apply(null, allDates));
+    const newestDate = new Date(Math.max.apply(null, allDates));
+    const oldestDate = new Date(Math.min.apply(null, allDates));
     
-    // Create three header rows now
     const yearHeaderRow = document.createElement('tr');
     const monthHeaderRow = document.createElement('tr');
     const dayHeaderRow = document.createElement('tr');
     const calendarDates = [];
+    
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-    // Add empty cells to all three rows for alignment
     for (let i = 0; i < 6; i++) {
         yearHeaderRow.appendChild(document.createElement('th'));
         monthHeaderRow.appendChild(document.createElement('th'));
@@ -51,35 +52,33 @@ function generateCalendarHeaders(priceMap) {
 
     let currentDate = new Date(newestDate); currentDate.setUTCHours(0, 0, 0, 0); oldestDate.setUTCHours(0, 0, 0, 0);
     
-    // Tracking variables for year, month, and their colspans
-    let currentYearStr = ''; let currentMonthStr = '';
+    let currentYearStr = ''; let currentMonthIndex = -1;
     let yearColspan = 0; let monthColspan = 0;
 
     while (currentDate >= oldestDate) {
         const year = currentDate.getUTCFullYear().toString();
         const yearShort = year.slice(-2);
-        const month = (currentDate.getUTCMonth() + 1).toString().padStart(2, '0');
+        const monthIndex = currentDate.getUTCMonth();
+        const monthNumStr = (monthIndex + 1).toString().padStart(2, '0');
         const day = currentDate.getUTCDate().toString().padStart(2, '0');
-        const dateStr = `${yearShort}-${month}-${day}`;
+        const dateStr = `${yearShort}-${monthNumStr}-${day}`;
 
-        // --- Year grouping logic ---
         if (year !== currentYearStr) {
             if (yearColspan > 0) {
                 const yearTh = document.createElement('th'); yearTh.className = 'price-header-month'; yearTh.colSpan = yearColspan; yearTh.innerHTML = `<b>${currentYearStr}</b>`; yearHeaderRow.appendChild(yearTh);
-                const monthTh = document.createElement('th'); monthTh.className = 'price-header-month'; monthTh.colSpan = monthColspan; monthTh.innerHTML = `<b>${currentMonthStr}</b>`; monthHeaderRow.appendChild(monthTh);
+                const monthTh = document.createElement('th'); monthTh.className = 'price-header-month'; monthTh.colSpan = monthColspan; monthTh.innerHTML = `<b>${monthNames[currentMonthIndex]}</b>`; monthHeaderRow.appendChild(monthTh);
             }
             currentYearStr = year;
-            currentMonthStr = month;
+            currentMonthIndex = monthIndex;
             yearColspan = 0;
             monthColspan = 0;
         }
 
-        // --- Month grouping logic ---
-        if (month !== currentMonthStr) {
+        if (monthIndex !== currentMonthIndex) {
             if (monthColspan > 0) {
-                const monthTh = document.createElement('th'); monthTh.className = 'price-header-month'; monthTh.colSpan = monthColspan; monthTh.innerHTML = `<b>${currentMonthStr}</b>`; monthHeaderRow.appendChild(monthTh);
+                const monthTh = document.createElement('th'); monthTh.className = 'price-header-month'; monthTh.colSpan = monthColspan; monthTh.innerHTML = `<b>${monthNames[currentMonthIndex]}</b>`; monthHeaderRow.appendChild(monthTh);
             }
-            currentMonthStr = month;
+            currentMonthIndex = monthIndex;
             monthColspan = 0;
         }
 
@@ -90,30 +89,22 @@ function generateCalendarHeaders(priceMap) {
         currentDate.setUTCDate(currentDate.getUTCDate() - 1);
     }
     
-    // Append the final remaining groups
-    if (monthColspan > 0) { const monthTh = document.createElement('th'); monthTh.className = 'price-header-month'; monthTh.colSpan = monthColspan; monthTh.innerHTML = `<b>${currentMonthStr}</b>`; monthHeaderRow.appendChild(monthTh); }
+    if (monthColspan > 0) { const monthTh = document.createElement('th'); monthTh.className = 'price-header-month'; monthTh.colSpan = monthColspan; monthTh.innerHTML = `<b>${monthNames[currentMonthIndex]}</b>`; monthHeaderRow.appendChild(monthTh); }
     if (yearColspan > 0) { const yearTh = document.createElement('th'); yearTh.className = 'price-header-month'; yearTh.colSpan = yearColspan; yearTh.innerHTML = `<b>${currentYearStr}</b>`; yearHeaderRow.appendChild(yearTh); }
 
     return { yearHeaderRow, monthHeaderRow, dayHeaderRow, calendarDates };
 }
 function renderTable(carData, priceMap, user) {
     const tableHeader = carTable.querySelector('thead'); tableHeader.innerHTML = ''; carTableBody.innerHTML = '';
-    
-    // Destructure the new yearHeaderRow
     const { yearHeaderRow, monthHeaderRow, dayHeaderRow, calendarDates } = generateCalendarHeaders(priceMap);
-    
     if (calendarDates.length === 0) { tableHeader.appendChild(yearHeaderRow); return; }
-
     const staticHeaderRow = document.createElement('tr');
     staticHeaderRow.innerHTML = `<th class="own-header">Own</th><th>Car Name</th><th>Maker</th><th>Country</th><th>Stock Performance</th><th>Available Colors</th>`;
     calendarDates.forEach(() => staticHeaderRow.appendChild(document.createElement('th')));
-
-    // Append all three header rows
     tableHeader.appendChild(staticHeaderRow);
     tableHeader.appendChild(yearHeaderRow);
     tableHeader.appendChild(monthHeaderRow);
     tableHeader.appendChild(dayHeaderRow);
-
     for (const car of carData) {
         const row = carTableBody.insertRow();
         const ownCell = row.insertCell(); ownCell.className = 'own-checkbox-cell'; const ownCheckbox = document.createElement('input'); ownCheckbox.type = 'checkbox'; ownCheckbox.id = `car-${car.id}`; ownCheckbox.dataset.identifier = car.id; ownCell.appendChild(ownCheckbox);
