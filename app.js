@@ -32,29 +32,88 @@ function generateCalendarHeaders(priceMap) {
         const [year, month, day] = datePart.split('-').map(Number);
         return new Date(Date.UTC(2000 + year, month - 1, day));
     }).filter(d => !isNaN(d));
-    if (allDates.length === 0) { const row = document.createElement('tr'); const cell = row.insertCell(); cell.colSpan = 7; cell.textContent = "Error: No price data available to build timeline."; return { monthHeaderRow: row, dayHeaderRow: document.createElement('tr'), calendarDates: [] }; }
+    if (allDates.length === 0) { const row = document.createElement('tr'); const cell = row.insertCell(); cell.colSpan = 7; cell.textContent = "Error: No price data available to build timeline."; return { yearHeaderRow: row, monthHeaderRow: document.createElement('tr'), dayHeaderRow: document.createElement('tr'), calendarDates: [] }; }
+
     const newestDate = new Date(Math.max.apply(null, allDates)); const oldestDate = new Date(Math.min.apply(null, allDates));
-    const monthHeaderRow = document.createElement('tr'); const dayHeaderRow = document.createElement('tr'); const calendarDates = [];
-    for (let i = 0; i < 6; i++) { monthHeaderRow.appendChild(document.createElement('th')); dayHeaderRow.appendChild(document.createElement('th')); }
+    
+    // Create three header rows now
+    const yearHeaderRow = document.createElement('tr');
+    const monthHeaderRow = document.createElement('tr');
+    const dayHeaderRow = document.createElement('tr');
+    const calendarDates = [];
+
+    // Add empty cells to all three rows for alignment
+    for (let i = 0; i < 6; i++) {
+        yearHeaderRow.appendChild(document.createElement('th'));
+        monthHeaderRow.appendChild(document.createElement('th'));
+        dayHeaderRow.appendChild(document.createElement('th'));
+    }
+
     let currentDate = new Date(newestDate); currentDate.setUTCHours(0, 0, 0, 0); oldestDate.setUTCHours(0, 0, 0, 0);
-    let currentMonthStr = ''; let monthColspan = 0;
+    
+    // Tracking variables for year, month, and their colspans
+    let currentYearStr = ''; let currentMonthStr = '';
+    let yearColspan = 0; let monthColspan = 0;
+
     while (currentDate >= oldestDate) {
-        const year = currentDate.getUTCFullYear().toString().slice(-2); const month = (currentDate.getUTCMonth() + 1).toString().padStart(2, '0'); const day = currentDate.getUTCDate().toString().padStart(2, '0'); const dateStr = `${year}-${month}-${day}`; const monthStr = `${year}-${month}`;
+        const year = currentDate.getUTCFullYear().toString();
+        const yearShort = year.slice(-2);
+        const month = (currentDate.getUTCMonth() + 1).toString().padStart(2, '0');
+        const day = currentDate.getUTCDate().toString().padStart(2, '0');
+        const dateStr = `${yearShort}-${month}-${day}`;
+
+        // --- Year grouping logic ---
+        if (year !== currentYearStr) {
+            if (yearColspan > 0) {
+                const yearTh = document.createElement('th'); yearTh.className = 'price-header-month'; yearTh.colSpan = yearColspan; yearTh.innerHTML = `<b>${currentYearStr}</b>`; yearHeaderRow.appendChild(yearTh);
+                const monthTh = document.createElement('th'); monthTh.className = 'price-header-month'; monthTh.colSpan = monthColspan; monthTh.innerHTML = `<b>${currentMonthStr}</b>`; monthHeaderRow.appendChild(monthTh);
+            }
+            currentYearStr = year;
+            currentMonthStr = month;
+            yearColspan = 0;
+            monthColspan = 0;
+        }
+
+        // --- Month grouping logic ---
+        if (month !== currentMonthStr) {
+            if (monthColspan > 0) {
+                const monthTh = document.createElement('th'); monthTh.className = 'price-header-month'; monthTh.colSpan = monthColspan; monthTh.innerHTML = `<b>${currentMonthStr}</b>`; monthHeaderRow.appendChild(monthTh);
+            }
+            currentMonthStr = month;
+            monthColspan = 0;
+        }
+
+        yearColspan++;
+        monthColspan++;
         calendarDates.push(dateStr);
-        if (monthStr !== currentMonthStr) { if (monthColspan > 0) { const th = document.createElement('th'); th.className = 'price-header-month'; th.colSpan = monthColspan; th.innerHTML = `<b>20${currentMonthStr.replace('-', '/')}</b>`; monthHeaderRow.appendChild(th); } currentMonthStr = monthStr; monthColspan = 0; }
-        monthColspan++; const dayTh = document.createElement('th'); dayTh.className = 'price-header-day'; dayTh.textContent = day; dayHeaderRow.appendChild(dayTh);
+        const dayTh = document.createElement('th'); dayTh.className = 'price-header-day'; dayTh.textContent = day; dayHeaderRow.appendChild(dayTh);
         currentDate.setUTCDate(currentDate.getUTCDate() - 1);
     }
-    if (monthColspan > 0) { const th = document.createElement('th'); th.className = 'price-header-month'; th.colSpan = monthColspan; th.innerHTML = `<b>20${currentMonthStr.replace('-', '/')}</b>`; monthHeaderRow.appendChild(th); }
-    return { monthHeaderRow, dayHeaderRow, calendarDates };
+    
+    // Append the final remaining groups
+    if (monthColspan > 0) { const monthTh = document.createElement('th'); monthTh.className = 'price-header-month'; monthTh.colSpan = monthColspan; monthTh.innerHTML = `<b>${currentMonthStr}</b>`; monthHeaderRow.appendChild(monthTh); }
+    if (yearColspan > 0) { const yearTh = document.createElement('th'); yearTh.className = 'price-header-month'; yearTh.colSpan = yearColspan; yearTh.innerHTML = `<b>${currentYearStr}</b>`; yearHeaderRow.appendChild(yearTh); }
+
+    return { yearHeaderRow, monthHeaderRow, dayHeaderRow, calendarDates };
 }
 function renderTable(carData, priceMap, user) {
     const tableHeader = carTable.querySelector('thead'); tableHeader.innerHTML = ''; carTableBody.innerHTML = '';
-    const { monthHeaderRow, dayHeaderRow, calendarDates } = generateCalendarHeaders(priceMap);
-    if (calendarDates.length === 0) { tableHeader.appendChild(monthHeaderRow); return; }
-    const staticHeaderRow = document.createElement('tr'); staticHeaderRow.innerHTML = `<th class="own-header">Own</th><th>Car Name</th><th>Maker</th><th>Country</th><th>Stock Performance</th><th>Available Colors</th>`;
+    
+    // Destructure the new yearHeaderRow
+    const { yearHeaderRow, monthHeaderRow, dayHeaderRow, calendarDates } = generateCalendarHeaders(priceMap);
+    
+    if (calendarDates.length === 0) { tableHeader.appendChild(yearHeaderRow); return; }
+
+    const staticHeaderRow = document.createElement('tr');
+    staticHeaderRow.innerHTML = `<th class="own-header">Own</th><th>Car Name</th><th>Maker</th><th>Country</th><th>Stock Performance</th><th>Available Colors</th>`;
     calendarDates.forEach(() => staticHeaderRow.appendChild(document.createElement('th')));
-    tableHeader.appendChild(staticHeaderRow); tableHeader.appendChild(monthHeaderRow); tableHeader.appendChild(dayHeaderRow);
+
+    // Append all three header rows
+    tableHeader.appendChild(staticHeaderRow);
+    tableHeader.appendChild(yearHeaderRow);
+    tableHeader.appendChild(monthHeaderRow);
+    tableHeader.appendChild(dayHeaderRow);
+
     for (const car of carData) {
         const row = carTableBody.insertRow();
         const ownCell = row.insertCell(); ownCell.className = 'own-checkbox-cell'; const ownCheckbox = document.createElement('input'); ownCheckbox.type = 'checkbox'; ownCheckbox.id = `car-${car.id}`; ownCheckbox.dataset.identifier = car.id; ownCell.appendChild(ownCheckbox);
@@ -64,7 +123,6 @@ function renderTable(carData, priceMap, user) {
         let lastUsedPrice = 'initial'; let lastLegendPrice = 'initial'; let colspan = 0;
         const appendCell = () => { if (colspan === 0) return; const cell = row.insertCell(); cell.className = 'price-cell'; cell.colSpan = colspan; let cellContent = ''; if (lastUsedPrice) { const usedPrice = parseInt(lastUsedPrice, 10); if (!isNaN(usedPrice)) cellContent += `<div class='price-used'>U: ${usedPrice.toLocaleString()}</div>`; } if (lastLegendPrice) { const legendPrice = parseInt(lastLegendPrice, 10); if (!isNaN(legendPrice)) cellContent += `<div class='price-legend'>L: ${legendPrice.toLocaleString()}</div>`; } cell.innerHTML = cellContent; };
         for (const dateStr of calendarDates) {
-            // THE FIX IS HERE: We now build simple keys without extra quotes
             const usedKey = `${car.id},${dateStr},used`;
             const legendKey = `${car.id},${dateStr},legend`;
             const currentUsed = priceMap[usedKey] || null;
